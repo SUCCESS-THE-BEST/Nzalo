@@ -11,9 +11,9 @@ import { useState } from 'react';
 import { supabase } from '../../config/supabase';
 import { colors } from '../../theme/colors';
 
-export default function VerifyNumberScreen({ route, navigation }) {
+export default function VerifyEmailScreen({ route, navigation }) {
 
-    const { phone } = route.params;
+    const { email } = route.params;
 
     const [code, setCode] = useState('');
     const [loading, setLoading] = useState(false);
@@ -21,7 +21,6 @@ export default function VerifyNumberScreen({ route, navigation }) {
     async function handleVerify() {
 
         if (code.length !== 6) {
-
             Alert.alert(
                 'Invalid code',
                 'Please enter the 6-digit verification code.'
@@ -35,17 +34,16 @@ export default function VerifyNumberScreen({ route, navigation }) {
             setLoading(true);
 
             const { error } = await supabase.auth.verifyOtp({
-                phone,
+                email: email,
                 token: code,
-                type: 'sms',
+                type: 'signup',
             });
 
             if (error) {
                 throw error;
             }
 
-            // Don't navigate manually.
-            // AuthContext will detect the new session.
+            navigation.replace('Main');
 
         } catch (error) {
 
@@ -63,8 +61,9 @@ export default function VerifyNumberScreen({ route, navigation }) {
 
         try {
 
-            const { error } = await supabase.auth.signInWithOtp({
-                phone: phone,
+            const { error } = await supabase.auth.resend({
+                type: 'signup',
+                email: email,
             });
 
             if (error) {
@@ -92,15 +91,15 @@ export default function VerifyNumberScreen({ route, navigation }) {
             <View>
 
                 <Text style={styles.title}>
-                    Verify your number
+                    Verify your email
                 </Text>
 
                 <Text style={styles.subtitle}>
                     We've sent a verification code to
                 </Text>
 
-                <Text style={styles.phone}>
-                    {phone}
+                <Text style={styles.email}>
+                    {email}
                 </Text>
 
                 <TextInput
@@ -159,7 +158,7 @@ const styles = StyleSheet.create({
         fontSize: 15,
     },
 
-    phone: {
+    email: {
         fontWeight: '700',
         color: colors.text,
         marginTop: 5,
