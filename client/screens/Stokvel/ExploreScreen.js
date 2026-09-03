@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
 
     listContent: {
         paddingHorizontal: 20,
-        paddingTop: 32,
+        paddingTop: 42,
         paddingBottom: 40,
         flexGrow: 1,
     },
@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: colors.white,
-        borderRadius: 15,
+        borderRadius: 30,
         paddingHorizontal: 15,
         gap: 10,
 
@@ -412,14 +412,14 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: colors.border,
 
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 3,
-        },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
+        // shadowColor: '#000',
+        // shadowOffset: {
+        //     width: 0,
+        //     height: 3,
+        // },
+        // shadowOpacity: 0.05,
+        // shadowRadius: 8,
+        // elevation: 2,
     },
 
     cardHeader: {

@@ -4,174 +4,115 @@ import {
     View,
     Pressable,
     ScrollView,
-    Image,
-    ActivityIndicator,
+    Image
 } from 'react-native';
 
-import { CreditCard, Users2, LucideBell, HandCoins } from 'lucide-react-native';
+import { CreditCard, Users2, LucideBell, HandCoins} from 'lucide-react-native'
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/fonts';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { useState, useCallback } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import { useEffect, useState } from 'react';
 
-import { supabase } from '../../config/supabase';
-import { useAuth } from '../../context/AuthContext';
 import ProfileSidebar from '../../components/ProfileSidebar';
+import { useAuth } from '../../context/AuthContext';
+import { supabase } from '../../config/supabase';
 
-const DEFAULT_AVATAR = 'https://static.vecteezy.com/system/resources/previews/067/619/141/non_2x/flat-style-cartoon-boy-avatar-smiling-male-profile-icon-for-app-web-and-social-media-vector.jpg';
+// const CURRENT_USER = {
+//     name: 'Lunga Sityebi',
+//     email: 'lunga.sityebi@gmail.com',
+//     avatar: 'https://static.vecteezy.com/system/resources/previews/067/619/141/non_2x/flat-style-cartoon-boy-avatar-smiling-male-profile-icon-for-app-web-and-social-media-vector.jpg',
+// };
 
-function getGreeting() {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
-}
+const DEFAULT_AVATAR =
+    'https://static.vecteezy.com/system/resources/previews/067/619/141/non_2x/flat-style-cartoon-boy-avatar-smiling-male-profile-icon-for-app-web-and-social-media-vector.jpg';
 
 export default function HomeScreen() {
 
-    const navigation = useNavigation();
-    const { user } = useAuth();
+    const navigation = useNavigation()
 
     const [sidebarVisible, setSidebarVisible] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [profile, setProfile] = useState(null);
-    const [stokvels, setStokvels] = useState([]);
-    const [totalBalance, setTotalBalance] = useState(0);
-    const [monthTotal, setMonthTotal] = useState(0);
+    const { user, loading: authLoading } = useAuth();
 
-    async function loadDashboard() {
+    const [profile, setProfile] = useState(null);
+    const [profileLoading, setProfileLoading] = useState(true);
+    const [stokvels, setStokvels] = useState([]);
+    const [stokvelsLoading, setStokvelsLoading] = useState(true);
+
+    useEffect(() => {
+
+    async function loadProfile() {
 
         if (!user) {
+            setProfileLoading(false);
             return;
         }
 
-        try {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
 
-            setLoading(true);
+        if (error) {
+            console.log('Profile error:', error.message);
+            setProfileLoading(false);
+            return;
+        }
 
-            // 1. Profile info (name, phone, avatar)
-            const { data: profileData, error: profileError } = await supabase
-                .from('profiles')
-                .select('id, full_name, phone_number, profile_image_url')
-                .eq('id', user.id)
-                .single();
+        setProfile(data);
+        setProfileLoading(false);
+    }
 
-            if (profileError) {
-                throw profileError;
+        if (!authLoading) {
+            loadProfile();
+        }
+
+    }, [user, authLoading]);
+
+
+    useEffect(() => {
+
+        async function loadStokvels() {
+
+            if (!user) {
+                setStokvelsLoading(false);
+                return;
             }
 
-            setProfile(profileData);
-
-            // 2. Stokvels this user belongs to (active memberships)
-            const { data: memberships, error: membershipError } = await supabase
+            const { data, error } = await supabase
                 .from('stokvel_members')
                 .select(`
                     stokvel_id,
-                    role,
-                    status,
                     stokvels (
                         id,
                         name,
+                        description,
                         contribution_amount,
                         contribution_frequency,
+                        max_members,
+                        creator_id,
                         status
                     )
                 `)
                 .eq('user_id', user.id)
                 .eq('status', 'active');
 
-            if (membershipError) {
-                throw membershipError;
-            }
-
-            const stokvelIds = memberships.map((m) => m.stokvel_id);
-
-            if (stokvelIds.length === 0) {
-                setStokvels([]);
-                setTotalBalance(0);
-                setMonthTotal(0);
+            if (error) {
+                console.log('Stokvel error:', error.message);
+                setStokvelsLoading(false);
                 return;
             }
 
-            // 3. Member counts for each stokvel
-            const { data: allMembers, error: membersError } = await supabase
-                .from('stokvel_members')
-                .select('stokvel_id')
-                .in('stokvel_id', stokvelIds)
-                .eq('status', 'active');
-
-            if (membersError) {
-                throw membersError;
-            }
-
-            const memberCounts = allMembers.reduce((acc, m) => {
-                acc[m.stokvel_id] = (acc[m.stokvel_id] || 0) + 1;
-                return acc;
-            }, {});
-
-            // 4. This user's paid contributions, to build a balance figure
-            const { data: contributions, error: contributionsError } = await supabase
-                .from('contributions')
-                .select('stokvel_id, amount, contribution_date')
-                .eq('user_id', user.id)
-                .eq('status', 'paid')
-                .in('stokvel_id', stokvelIds);
-
-            if (contributionsError) {
-                throw contributionsError;
-            }
-
-            const contributedByStokvel = contributions.reduce((acc, c) => {
-                acc[c.stokvel_id] = (acc[c.stokvel_id] || 0) + Number(c.amount);
-                return acc;
-            }, {});
-
-            const now = new Date();
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-            const thisMonthTotal = contributions
-                .filter((c) => new Date(c.contribution_date) >= startOfMonth)
-                .reduce((sum, c) => sum + Number(c.amount), 0);
-
-            const combined = memberships.map((m) => ({
-                id: m.stokvels.id,
-                name: m.stokvels.name,
-                members: memberCounts[m.stokvel_id] || 0,
-                contributed: contributedByStokvel[m.stokvel_id] || 0,
-            }));
-
-            setStokvels(combined);
-            setTotalBalance(
-                combined.reduce((sum, s) => sum + s.contributed, 0)
-            );
-            setMonthTotal(thisMonthTotal);
-
-        } catch (error) {
-            console.log('Dashboard load error:', error.message);
-        } finally {
-            setLoading(false);
+            setStokvels(data || []);
+            setStokvelsLoading(false);
         }
-    }
 
-    // Refresh whenever the screen regains focus (e.g. after EditProfile)
-    useFocusEffect(
-        useCallback(() => {
-            loadDashboard();
-        }, [user])
-    );
+        if (!authLoading) {
+            loadStokvels();
+        }
 
-    if (loading && !profile) {
-        return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={colors.primary} />
-            </View>
-        );
-    }
-
-    const displayName = profile?.full_name || 'Stokvel Member';
-    const avatarUri = profile?.profile_image_url || DEFAULT_AVATAR;
-    const primaryStokvel = stokvels[0];
+    }, [user, authLoading]);
 
     return (
         <ScrollView
@@ -185,18 +126,18 @@ export default function HomeScreen() {
                     style={styles.leftHeader}
                     onPress={() => setSidebarVisible(true)}
                 >
-                    <Image
-                        source={{ uri: avatarUri }}
+                    <Image 
+                        source={{uri: profile?.profile_image_url || DEFAULT_AVATAR}}
                         style={styles.avatar}
                     />
 
                     <View>
                         <Text style={styles.greeting}>
-                            {getGreeting()}
+                            Good afternoon
                         </Text>
 
                         <Text style={styles.name}>
-                            {displayName}
+                            {profile?.full_name || 'User'}
                         </Text>
                     </View>
                 </Pressable>
@@ -221,7 +162,7 @@ export default function HomeScreen() {
                     </Text>
 
                     <Text style={styles.balance}>
-                        R{totalBalance.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}
+                        R45,678.90
                     </Text>
 
                     <View style={styles.balanceBottom}>
@@ -231,7 +172,7 @@ export default function HomeScreen() {
                         </Text>
 
                         <Text style={styles.balanceInfo}>
-                            + R{monthTotal.toLocaleString('en-ZA', { minimumFractionDigits: 2 })} this month
+                            + R1,500 this month
                         </Text>
 
                     </View>
@@ -250,7 +191,7 @@ export default function HomeScreen() {
             <View style={styles.actions}>
 
                 <Pressable style={styles.action}>
-                    <HandCoins
+                    <HandCoins 
                         style={styles.actionIcon}
                     />
 
@@ -260,7 +201,7 @@ export default function HomeScreen() {
                 </Pressable>
 
                 <Pressable style={styles.action} onPress={() => navigation.navigate('Stokvels')}>
-                    <Users2
+                    <Users2 
                         style={styles.actionIcon}
                     />
 
@@ -270,8 +211,8 @@ export default function HomeScreen() {
                 </Pressable>
 
                 <Pressable style={styles.action}>
-                    <CreditCard
-                        style={styles.actionIcon}
+                    <CreditCard 
+                     style={styles.actionIcon}
                     />
 
                     <Text style={styles.actionText}>
@@ -287,47 +228,82 @@ export default function HomeScreen() {
                     My stokvels
                 </Text>
 
-                <Text style={styles.viewAll} onPress={() => navigation.navigate('Stokvels')}>
+                <Text style={styles.viewAll}>
                     View all
                 </Text>
 
             </View>
 
-            {primaryStokvel ? (
-                <View style={styles.stokvelCard}>
+            {stokvelsLoading ? (
 
-                    <View>
-
-                        <Text style={styles.stokvelName}>
-                            {primaryStokvel.name}
-                        </Text>
-
-                        <Text style={styles.stokvelMembers}>
-                            {primaryStokvel.members} members
-                        </Text>
-
-                    </View>
-
-                    <Text style={styles.stokvelAmount}>
-                        R{primaryStokvel.contributed.toLocaleString('en-ZA', { minimumFractionDigits: 2 })}
-                    </Text>
-
-                </View>
-            ) : (
                 <View style={styles.stokvelCard}>
                     <Text style={styles.stokvelMembers}>
-                        You haven't joined a stokvel yet.
+                        Loading stokvels...
                     </Text>
                 </View>
+
+            ) : stokvels.length === 0 ? (
+
+                <View style={styles.stokvelCard}>
+                    <Text style={styles.stokvelName}>
+                        No stokvels yet
+                    </Text>
+
+                    <Text style={styles.stokvelMembers}>
+                        Create or join a stokvel to get started.
+                    </Text>
+                </View>
+
+            ) : (
+
+                stokvels.slice(0, 3).map((item) => {
+
+                    const stokvel = item.stokvels;
+
+                    return (
+                        <Pressable
+                            key={stokvel.id}
+                            style={styles.stokvelCard}
+                            onPress={() =>
+                                navigation.navigate('StokvelDetail', {
+                                    id: stokvel.id
+                                })
+                            }
+                        >
+
+                            <View>
+
+                                <Text style={styles.stokvelName}>
+                                    {stokvel.name}
+                                </Text>
+
+                                <Text style={styles.stokvelMembers}>
+                                    {stokvel.contribution_frequency === 'monthly'
+                                        ? `R${Number(stokvel.contribution_amount).toLocaleString()} / month`
+                                        : `R${Number(stokvel.contribution_amount).toLocaleString()} / week`
+                                    }
+                                </Text>
+
+                            </View>
+
+                            <Text style={styles.stokvelAmount}>
+                                {stokvel.status}
+                            </Text>
+
+                        </Pressable>
+                    );
+
+                })
+
             )}
 
             <ProfileSidebar
                 visible={sidebarVisible}
                 onClose={() => setSidebarVisible(false)}
                 user={{
-                    name: displayName,
-                    email: user?.email,
-                    avatar: avatarUri,
+                    name: profile?.full_name || 'User',
+                    email: profile?.email || user?.email || '',
+                    avatar: profile?.profile_image_url || DEFAULT_AVATAR,
                 }}
                 onEditProfile={() => {
                     setSidebarVisible(false);
@@ -340,13 +316,6 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-
-    loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: colors.background,
-    },
 
     container: {
         flex: 1,

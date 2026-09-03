@@ -25,7 +25,7 @@ import EmptyState from '../../components/common/EmptyState';
 ----------------------------- */
 
 function StatusBadge({ status }) {
-    const contributed = status === 'contributed';
+    const contributed = status === 'due';
 
     return (
         <View
@@ -44,7 +44,7 @@ function StatusBadge({ status }) {
                         : styles.badgeTextDue,
                 ]}
             >
-                {contributed ? 'CONTRIBUTED' : 'DUE IN 3 DAYS'}
+                {contributed ? 'CONTRIBUTED' : 'DUE'}
             </Text>
         </View>
     );
@@ -522,15 +522,15 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#EEEEEE',
 
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.045,
-        shadowRadius: 8,
+        // shadowColor: '#000',
+        // shadowOffset: {
+        //     width: 0,
+        //     height: 2,
+        // },
+        // shadowOpacity: 0.045,
+        // shadowRadius: 8,
 
-        elevation: 1,
+        // elevation: 1,
     },
 
     cardPressed: {
