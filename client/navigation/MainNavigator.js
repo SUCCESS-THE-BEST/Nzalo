@@ -1,12 +1,13 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import { View, Text, StyleSheet } from 'react-native';
-import { Home, Search, MessageCircle, User,Compass, Import, Bot, Users2 } from 'lucide-react-native';
+import { Home, Search, MessageCircle, User,Compass, Import, Bot, Users2, PlusCircle } from 'lucide-react-native';
 
 import HomeScreen from '../screens/Home/HomeScreen';
-import MyStokvelsScreen from '../screens/Stokvel/MyStokvelsScreen';
 
+import ExploreStack from './ExploreStack';
 import HomeStack from './HomeStack';
+import StokvelStack from './StokvelStack';
 
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
@@ -65,7 +66,7 @@ export default function MainNavigator() {
 
             <Tab.Screen
                 name="Stokvels"
-                component={MyStokvelsScreen}
+                component={StokvelStack}
                 options={{
                     tabBarIcon: ({ focused }) => (
                         <TabIcon focused={focused} Icon={Users2} />
@@ -76,7 +77,7 @@ export default function MainNavigator() {
                 }}
             />
 
-            <Tab.Screen
+            {/* <Tab.Screen
                 name="Messages"
                 component={HomeScreen}
                 options={{
@@ -87,11 +88,11 @@ export default function MainNavigator() {
                         <TabLabel focused={focused} label="MESSAGES" />
                     ),
                 }}
-            />
+            /> */}
 
             <Tab.Screen
                 name="Explore"
-                component={HomeScreen}
+                component={ExploreStack}
                 options={{
                     tabBarIcon: ({ focused }) => (
                         <TabIcon focused={focused} Icon={Search} />

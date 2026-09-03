@@ -36,6 +36,8 @@ export default function HomeScreen() {
 
     const [profile, setProfile] = useState(null);
     const [profileLoading, setProfileLoading] = useState(true);
+    const [stokvels, setStokvels] = useState([]);
+    const [stokvelsLoading, setStokvelsLoading] = useState(true);
 
     useEffect(() => {
 
@@ -64,6 +66,50 @@ export default function HomeScreen() {
 
         if (!authLoading) {
             loadProfile();
+        }
+
+    }, [user, authLoading]);
+
+
+    useEffect(() => {
+
+        async function loadStokvels() {
+
+            if (!user) {
+                setStokvelsLoading(false);
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from('stokvel_members')
+                .select(`
+                    stokvel_id,
+                    stokvels (
+                        id,
+                        name,
+                        description,
+                        contribution_amount,
+                        contribution_frequency,
+                        max_members,
+                        creator_id,
+                        status
+                    )
+                `)
+                .eq('user_id', user.id)
+                .eq('status', 'active');
+
+            if (error) {
+                console.log('Stokvel error:', error.message);
+                setStokvelsLoading(false);
+                return;
+            }
+
+            setStokvels(data || []);
+            setStokvelsLoading(false);
+        }
+
+        if (!authLoading) {
+            loadStokvels();
         }
 
     }, [user, authLoading]);
@@ -188,25 +234,68 @@ export default function HomeScreen() {
 
             </View>
 
-            <View style={styles.stokvelCard}>
+            {stokvelsLoading ? (
 
-                <View>
+                <View style={styles.stokvelCard}>
+                    <Text style={styles.stokvelMembers}>
+                        Loading stokvels...
+                    </Text>
+                </View>
 
+            ) : stokvels.length === 0 ? (
+
+                <View style={styles.stokvelCard}>
                     <Text style={styles.stokvelName}>
-                        Masakhane Savings
+                        No stokvels yet
                     </Text>
 
                     <Text style={styles.stokvelMembers}>
-                        12 members
+                        Create or join a stokvel to get started.
                     </Text>
-
                 </View>
 
-                <Text style={styles.stokvelAmount}>
-                    R45,678.90
-                </Text>
+            ) : (
 
-            </View>
+                stokvels.slice(0, 3).map((item) => {
+
+                    const stokvel = item.stokvels;
+
+                    return (
+                        <Pressable
+                            key={stokvel.id}
+                            style={styles.stokvelCard}
+                            onPress={() =>
+                                navigation.navigate('StokvelDetail', {
+                                    id: stokvel.id
+                                })
+                            }
+                        >
+
+                            <View>
+
+                                <Text style={styles.stokvelName}>
+                                    {stokvel.name}
+                                </Text>
+
+                                <Text style={styles.stokvelMembers}>
+                                    {stokvel.contribution_frequency === 'monthly'
+                                        ? `R${Number(stokvel.contribution_amount).toLocaleString()} / month`
+                                        : `R${Number(stokvel.contribution_amount).toLocaleString()} / week`
+                                    }
+                                </Text>
+
+                            </View>
+
+                            <Text style={styles.stokvelAmount}>
+                                {stokvel.status}
+                            </Text>
+
+                        </Pressable>
+                    );
+
+                })
+
+            )}
 
             <ProfileSidebar
                 visible={sidebarVisible}
