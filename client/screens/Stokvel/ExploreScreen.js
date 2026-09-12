@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
     FlatList,
     Pressable,
@@ -6,13 +6,15 @@ import {
     Text,
     TextInput,
     View,
+    ActivityIndicator,
 } from 'react-native';
 
-import { Compass, Search } from 'lucide-react-native';
+import { Compass, Search, RefreshCw } from 'lucide-react-native';
 
 import { supabase } from '../../config/supabase';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/fonts';
+
 
 // ============================================================
 // Explore Card
@@ -21,15 +23,26 @@ import { fonts } from '../../theme/fonts';
 function ExploreCard({ item, onJoin }) {
     const initial = item.name?.charAt(0)?.toUpperCase() || '?';
 
+    const currentMembers = item.current_members || 0;
+    const maxMembers = item.max_members || 0;
+
+    const isFull =
+        maxMembers > 0 && currentMembers >= maxMembers;
+
     return (
         <View style={styles.card}>
+
             {/* Card Header */}
             <View style={styles.cardHeader}>
+
                 <View style={styles.iconCircle}>
-                    <Text style={styles.iconText}>{initial}</Text>
+                    <Text style={styles.iconText}>
+                        {initial}
+                    </Text>
                 </View>
 
                 <View style={styles.cardHeaderText}>
+
                     <Text
                         style={styles.cardTitle}
                         numberOfLines={1}
@@ -38,8 +51,14 @@ function ExploreCard({ item, onJoin }) {
                     </Text>
 
                     <Text style={styles.members}>
-                        Up to {item.max_members} members
+                        {currentMembers}
+                        {maxMembers > 0 ? ` / ${maxMembers}` : ''}
+                        {' '}
+                        {currentMembers === 1
+                            ? 'member'
+                            : 'members'}
                     </Text>
+
                 </View>
 
                 <View style={styles.publicBadge}>
@@ -47,7 +66,9 @@ function ExploreCard({ item, onJoin }) {
                         PUBLIC
                     </Text>
                 </View>
+
             </View>
+
 
             {/* Description */}
             <Text
@@ -57,45 +78,72 @@ function ExploreCard({ item, onJoin }) {
                 {item.description || 'No description provided.'}
             </Text>
 
+
             {/* Card Footer */}
             <View style={styles.cardFooter}>
+
                 <View style={styles.contributionContainer}>
+
                     <Text style={styles.contributionLabel}>
                         CONTRIBUTION
                     </Text>
 
                     <Text style={styles.contribution}>
-                        R{Number(item.contribution_amount).toLocaleString()}
+
+                        R
+                        {Number(
+                            item.contribution_amount || 0
+                        ).toLocaleString()}
+
                         <Text style={styles.frequency}>
                             {' / '}
-                            {item.contribution_frequency}
+                            {item.contribution_frequency || 'monthly'}
                         </Text>
+
                     </Text>
+
                 </View>
+
 
                 <Pressable
                     style={({ pressed }) => [
                         styles.joinButton,
-                        pressed && styles.buttonPressed,
+
+                        isFull && styles.joinButtonDisabled,
+
+                        pressed &&
+                            !isFull &&
+                            styles.buttonPressed,
                     ]}
                     onPress={onJoin}
+                    disabled={isFull}
                 >
-                    <Text style={styles.joinButtonText}>
-                        JOIN
+                    <Text
+                        style={[
+                            styles.joinButtonText,
+                            isFull &&
+                                styles.joinButtonTextDisabled,
+                        ]}
+                    >
+                        {isFull ? 'FULL' : 'JOIN'}
                     </Text>
                 </Pressable>
+
             </View>
+
         </View>
     );
 }
+
 
 // ============================================================
 // Empty State
 // ============================================================
 
-function EmptyState() {
+function EmptyState({ hasSearch }) {
     return (
         <View style={styles.emptyState}>
+
             <View style={styles.emptyIconWrapper}>
                 <Compass
                     size={36}
@@ -105,96 +153,328 @@ function EmptyState() {
             </View>
 
             <Text style={styles.emptyTitle}>
-                No stokvels found
+                {hasSearch
+                    ? 'No stokvels found'
+                    : 'No public stokvels yet'}
             </Text>
 
             <Text style={styles.emptySubtitle}>
-                Try a different search, or create your own stokvel.
+                {hasSearch
+                    ? 'Try searching for a different stokvel name or description.'
+                    : 'There are currently no public stokvels available to join. You can create your own instead.'}
             </Text>
+
         </View>
     );
 }
+
+
+// ============================================================
+// Error State
+// ============================================================
+
+function ErrorState({ onRetry }) {
+    return (
+        <View style={styles.errorState}>
+
+            <View style={styles.errorIconWrapper}>
+                <RefreshCw
+                    size={32}
+                    color={colors.primary}
+                    strokeWidth={1.8}
+                />
+            </View>
+
+            <Text style={styles.errorTitle}>
+                Something went wrong
+            </Text>
+
+            <Text style={styles.errorSubtitle}>
+                We couldn't load the available stokvels.
+                Please check your connection and try again.
+            </Text>
+
+            <Pressable
+                style={({ pressed }) => [
+                    styles.retryButton,
+                    pressed && styles.buttonPressed,
+                ]}
+                onPress={onRetry}
+            >
+                <Text style={styles.retryButtonText}>
+                    Try Again
+                </Text>
+            </Pressable>
+
+        </View>
+    );
+}
+
 
 // ============================================================
 // Explore Screen
 // ============================================================
 
 export default function ExploreScreen({ navigation }) {
+
     const [stokvels, setStokvels] = useState([]);
+
     const [search, setSearch] = useState('');
+
     const [loading, setLoading] = useState(true);
+
+    const [refreshing, setRefreshing] = useState(false);
+
+    const [error, setError] = useState(false);
+
+
+    // ========================================================
+    // Fetch Stokvels
+    // ========================================================
+
+    const fetchStokvels = useCallback(
+        async (isRefreshing = false) => {
+
+            try {
+
+                if (isRefreshing) {
+                    setRefreshing(true);
+                } else {
+                    setLoading(true);
+                }
+
+                setError(false);
+
+
+                // --------------------------------------------
+                // Get public active stokvels
+                // --------------------------------------------
+
+                const { data, error: stokvelError } =
+                    await supabase
+                        .from('stokvels')
+                        .select(`
+                            id,
+                            name,
+                            description,
+                            contribution_amount,
+                            contribution_frequency,
+                            max_members
+                        `)
+                        .eq('visibility', 'public')
+                        .eq('status', 'active')
+                        .order('created_at', {
+                            ascending: false,
+                        });
+
+
+                if (stokvelError) {
+                    throw stokvelError;
+                }
+
+
+                // --------------------------------------------
+                // Get member counts
+                // --------------------------------------------
+
+                const stokvelIds =
+                    (data || []).map(
+                        (stokvel) => stokvel.id
+                    );
+
+
+                if (stokvelIds.length === 0) {
+
+                    setStokvels([]);
+
+                    return;
+                }
+
+
+                const { data: members, error: memberError } =
+                    await supabase
+                        .from('stokvel_members')
+                        .select('stokvel_id')
+                        .in('stokvel_id', stokvelIds)
+                        .eq('status', 'active');
+
+
+                if (memberError) {
+                    throw memberError;
+                }
+
+
+                // --------------------------------------------
+                // Count members per stokvel
+                // --------------------------------------------
+
+                const memberCounts = {};
+
+                (members || []).forEach((member) => {
+
+                    if (!memberCounts[member.stokvel_id]) {
+                        memberCounts[member.stokvel_id] = 0;
+                    }
+
+                    memberCounts[member.stokvel_id]++;
+                });
+
+
+                // --------------------------------------------
+                // Combine stokvel data + member counts
+                // --------------------------------------------
+
+                const formattedStokvels =
+                    (data || []).map((stokvel) => ({
+                        ...stokvel,
+
+                        current_members:
+                            memberCounts[stokvel.id] || 0,
+                    }));
+
+
+                setStokvels(formattedStokvels);
+
+            } catch (err) {
+
+                console.error(
+                    'Error fetching stokvels:',
+                    err
+                );
+
+                setError(true);
+
+            } finally {
+
+                setLoading(false);
+                setRefreshing(false);
+            }
+
+        },
+        []
+    );
+
+
+    // ========================================================
+    // Initial Load
+    // ========================================================
 
     useEffect(() => {
         fetchStokvels();
-    }, []);
+    }, [fetchStokvels]);
 
-    async function fetchStokvels() {
-        try {
-            setLoading(true);
 
-            const { data, error } = await supabase
-                .from('stokvels')
-                .select(`
-                    id,
-                    name,
-                    description,
-                    contribution_amount,
-                    contribution_frequency,
-                    max_members
-                `)
-                .eq('visibility', 'public')
-                .eq('status', 'active')
-                .order('created_at', { ascending: false });
+    // ========================================================
+    // Pull To Refresh
+    // ========================================================
 
-            if (error) {
-                console.error('Error fetching stokvels:', error);
-                return;
+    function handleRefresh() {
+        fetchStokvels(true);
+    }
+
+
+    // ========================================================
+    // Search
+    // ========================================================
+
+    const filteredStokvels = stokvels.filter(
+        (stokvel) => {
+
+            const query =
+                search.trim().toLowerCase();
+
+            if (!query) {
+                return true;
             }
 
-            setStokvels(data || []);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
+            return (
+                stokvel.name
+                    ?.toLowerCase()
+                    .includes(query) ||
+
+                stokvel.description
+                    ?.toLowerCase()
+                    .includes(query)
+            );
         }
-    }
+    );
 
-    const filteredStokvels = stokvels.filter((stokvel) => {
-        const query = search.trim().toLowerCase();
 
-        if (!query) {
-            return true;
-        }
-
-        return (
-            stokvel.name?.toLowerCase().includes(query) ||
-            stokvel.description?.toLowerCase().includes(query)
-        );
-    });
+    // ========================================================
+    // Join
+    // ========================================================
 
     function handleJoin(item) {
-        // TODO:
-        // Wire this up to stokvelServices.
-        // This should create a stokvel_members row
-        // with status = 'pending'.
 
-        console.log('Requested to join', item.name);
+        navigation.navigate('Stokvels', {
+            screen: 'JoinStokvel',
+            params: {
+                stokvelId: item.id,
+            },
+        });
+
     }
+
+
+    // ========================================================
+    // Create Stokvel
+    // ========================================================
+
+    function handleCreateStokvel() {
+
+        navigation.navigate('Stokvels', {
+            screen: 'CreateStokvel',
+        });
+    }
+
+
+    // ========================================================
+    // Render
+    // ========================================================
 
     return (
         <View style={styles.container}>
+
             <FlatList
+
                 data={filteredStokvels}
+
                 keyExtractor={(item) => item.id}
+
                 showsVerticalScrollIndicator={false}
+
                 contentContainerStyle={styles.listContent}
+
                 keyboardShouldPersistTaps="handled"
 
+
+                // --------------------------------------------
+                // Pull to refresh
+                // --------------------------------------------
+
+                refreshing={refreshing}
+
+                onRefresh={handleRefresh}
+
+
+                // --------------------------------------------
+                // Header
+                // --------------------------------------------
+
                 ListHeaderComponent={
+
                     <View>
+
                         {/* Page Header */}
+
                         <View style={styles.header}>
-                            <View style={styles.headerTextContainer}>
+
+                            <View
+                                style={
+                                    styles.headerTextContainer
+                                }
+                            >
+
                                 <Text style={styles.title}>
                                     Explore
                                 </Text>
@@ -202,94 +482,186 @@ export default function ExploreScreen({ navigation }) {
                                 <Text style={styles.subtitle}>
                                     Discover public stokvels to join
                                 </Text>
+
                             </View>
+
 
                             <Pressable
                                 style={({ pressed }) => [
                                     styles.createButton,
-                                    pressed && styles.buttonPressed,
+                                    pressed &&
+                                        styles.buttonPressed,
                                 ]}
-                                onPress={() =>
-                                    navigation.navigate('Stokvels', {
-                                        screen: 'CreateStokvel',
-                                    })
+                                onPress={
+                                    handleCreateStokvel
                                 }
                             >
-                                <Text style={styles.createButtonText}>
+
+                                <Text
+                                    style={
+                                        styles.createButtonText
+                                    }
+                                >
                                     + Create
                                 </Text>
+
                             </Pressable>
+
                         </View>
 
+
                         {/* Search */}
+
                         <View style={styles.searchBar}>
+
                             <Search
                                 size={19}
-                                color={colors.textSecondary}
+                                color={
+                                    colors.textSecondary
+                                }
                                 strokeWidth={2}
                             />
 
                             <TextInput
                                 style={styles.searchInput}
+
                                 placeholder="Search stokvels..."
-                                placeholderTextColor={colors.textSecondary}
+
+                                placeholderTextColor={
+                                    colors.textSecondary
+                                }
+
                                 value={search}
+
                                 onChangeText={setSearch}
+
                                 returnKeyType="search"
+
+                                autoCapitalize="none"
                             />
+
                         </View>
 
+
                         {/* Results Count */}
-                        {!loading && (
-                            <View style={styles.resultsRow}>
-                                <Text style={styles.resultsText}>
+
+                        {!loading && !error && (
+                            <View
+                                style={
+                                    styles.resultsRow
+                                }
+                            >
+
+                                <Text
+                                    style={
+                                        styles.resultsText
+                                    }
+                                >
                                     {filteredStokvels.length}{' '}
+
                                     {filteredStokvels.length === 1
                                         ? 'stokvel'
-                                        : 'stokvels'}{' '}
-                                    available
+                                        : 'stokvels'}
+
+                                    {' '}available
                                 </Text>
+
                             </View>
                         )}
+
                     </View>
                 }
 
+
+                // --------------------------------------------
+                // Stokvel Card
+                // --------------------------------------------
+
                 renderItem={({ item }) => (
+
                     <ExploreCard
                         item={item}
                         onJoin={() => handleJoin(item)}
                     />
+
                 )}
+
+
+                // --------------------------------------------
+                // Separator
+                // --------------------------------------------
 
                 ItemSeparatorComponent={() => (
                     <View style={styles.separator} />
                 )}
 
+
+                // --------------------------------------------
+                // Loading / Error / Empty
+                // --------------------------------------------
+
                 ListEmptyComponent={
+
                     loading ? (
-                        <View style={styles.loadingContainer}>
-                            <Text style={styles.loadingText}>
+
+                        <View
+                            style={
+                                styles.loadingContainer
+                            }
+                        >
+
+                            <ActivityIndicator
+                                size="small"
+                                color={colors.primary}
+                            />
+
+                            <Text
+                                style={
+                                    styles.loadingText
+                                }
+                            >
                                 Loading stokvels...
                             </Text>
+
                         </View>
+
+                    ) : error ? (
+
+                        <ErrorState
+                            onRetry={() =>
+                                fetchStokvels()
+                            }
+                        />
+
                     ) : (
-                        <EmptyState />
+
+                        <EmptyState
+                            hasSearch={
+                                search.trim().length > 0
+                            }
+                        />
+
                     )
                 }
+
             />
+
         </View>
     );
 }
+
 
 // ============================================================
 // Styles
 // ============================================================
 
 const styles = StyleSheet.create({
+
     container: {
         flex: 1,
         backgroundColor: colors.background,
     },
+
 
     listContent: {
         paddingHorizontal: 20,
@@ -297,6 +669,7 @@ const styles = StyleSheet.create({
         paddingBottom: 40,
         flexGrow: 1,
     },
+
 
     // --------------------------------------------------------
     // Header
@@ -330,6 +703,11 @@ const styles = StyleSheet.create({
         marginTop: 4,
     },
 
+
+    // --------------------------------------------------------
+    // Create Button
+    // --------------------------------------------------------
+
     createButton: {
         backgroundColor: colors.primaryDark,
         minHeight: 40,
@@ -353,6 +731,7 @@ const styles = StyleSheet.create({
         fontFamily: fonts.semibold,
         fontSize: 12,
     },
+
 
     // --------------------------------------------------------
     // Search
@@ -389,6 +768,11 @@ const styles = StyleSheet.create({
         paddingVertical: 0,
     },
 
+
+    // --------------------------------------------------------
+    // Results
+    // --------------------------------------------------------
+
     resultsRow: {
         marginTop: 20,
         marginBottom: 10,
@@ -399,6 +783,7 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: colors.textSecondary,
     },
+
 
     // --------------------------------------------------------
     // Stokvel Card
@@ -411,15 +796,6 @@ const styles = StyleSheet.create({
 
         borderWidth: 1,
         borderColor: colors.border,
-
-        // shadowColor: '#000',
-        // shadowOffset: {
-        //     width: 0,
-        //     height: 3,
-        // },
-        // shadowOpacity: 0.05,
-        // shadowRadius: 8,
-        // elevation: 2,
     },
 
     cardHeader: {
@@ -477,6 +853,11 @@ const styles = StyleSheet.create({
         color: colors.primary,
     },
 
+
+    // --------------------------------------------------------
+    // Description
+    // --------------------------------------------------------
+
     description: {
         fontFamily: fonts.regular,
         fontSize: 13,
@@ -484,6 +865,11 @@ const styles = StyleSheet.create({
         color: colors.textSecondary,
         marginBottom: 18,
     },
+
+
+    // --------------------------------------------------------
+    // Card Footer
+    // --------------------------------------------------------
 
     cardFooter: {
         flexDirection: 'row',
@@ -520,6 +906,11 @@ const styles = StyleSheet.create({
         color: colors.textSecondary,
     },
 
+
+    // --------------------------------------------------------
+    // Join Button
+    // --------------------------------------------------------
+
     joinButton: {
         minWidth: 72,
         height: 36,
@@ -531,6 +922,10 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
 
+    joinButtonDisabled: {
+        backgroundColor: colors.border,
+    },
+
     joinButtonText: {
         fontFamily: fonts.semibold,
         fontSize: 11,
@@ -538,23 +933,48 @@ const styles = StyleSheet.create({
         color: colors.white,
     },
 
+    joinButtonTextDisabled: {
+        color: colors.textSecondary,
+    },
+
     buttonPressed: {
         opacity: 0.75,
         transform: [{ scale: 0.98 }],
     },
 
+
+    // --------------------------------------------------------
+    // Separator
+    // --------------------------------------------------------
+
     separator: {
         height: 14,
     },
 
+
     // --------------------------------------------------------
-    // Empty / Loading
+    // Loading
+    // --------------------------------------------------------
+
+    loadingContainer: {
+        alignItems: 'center',
+        paddingTop: 60,
+    },
+
+    loadingText: {
+        fontFamily: fonts.regular,
+        fontSize: 13,
+        color: colors.textSecondary,
+        marginTop: 10,
+    },
+
+
+    // --------------------------------------------------------
+    // Empty
     // --------------------------------------------------------
 
     emptyState: {
-        flex: 1,
         alignItems: 'center',
-        justifyContent: 'center',
         paddingHorizontal: 30,
         paddingTop: 70,
     },
@@ -591,15 +1011,63 @@ const styles = StyleSheet.create({
         maxWidth: 280,
     },
 
-    loadingContainer: {
+
+    // --------------------------------------------------------
+    // Error
+    // --------------------------------------------------------
+
+    errorState: {
         alignItems: 'center',
-        paddingTop: 60,
+        paddingHorizontal: 30,
+        paddingTop: 70,
     },
 
-    loadingText: {
+    errorIconWrapper: {
+        width: 76,
+        height: 76,
+        borderRadius: 38,
+        backgroundColor: colors.white,
+
+        alignItems: 'center',
+        justifyContent: 'center',
+
+        borderWidth: 1,
+        borderColor: colors.border,
+
+        marginBottom: 20,
+    },
+
+    errorTitle: {
+        fontFamily: fonts.bold,
+        fontSize: 18,
+        color: colors.text,
+        marginBottom: 7,
+        textAlign: 'center',
+    },
+
+    errorSubtitle: {
         fontFamily: fonts.regular,
         fontSize: 13,
+        lineHeight: 20,
         color: colors.textSecondary,
+        textAlign: 'center',
+        maxWidth: 290,
+        marginBottom: 20,
     },
-});
 
+    retryButton: {
+        backgroundColor: colors.primary,
+        paddingHorizontal: 22,
+        height: 40,
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+
+    retryButtonText: {
+        fontFamily: fonts.semibold,
+        fontSize: 12,
+        color: colors.white,
+    },
+
+});

@@ -4,9 +4,10 @@ import MyStokvelsScreen from '../screens/Stokvel/MyStokvelsScreen';
 import StokvelDetailsScreen from '../screens/Stokvel/StokvelDetailsScreen';
 import GroupSettingsScreen from '../screens/Stokvel/GroupSettingsScreen';
 import CreateStokvelScreen from '../screens/Stokvel/CreateStokvelScreen';
-// import JoinStokvelScreen from '../screens/Stokvel/JoinStokvelScreen';
+import JoinStokvelScreen from '../screens/Stokvel/JoinStokvelScreen';
 import InviteMemberScreen from '../screens/Stokvel/InviteMemberScreen';
 import MemberProfileScreen from '../screens/Stokvel/MemberProfileScreen';
+import JoinRequestsScreen from '../screens/Stokvel/JoinRequestsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -43,10 +44,15 @@ export default function StokvelStack() {
                 component={CreateStokvelScreen}
             />
 
-            {/* <Stack.Screen
+            <Stack.Screen
                 name="JoinStokvel"
                 component={JoinStokvelScreen}
-            /> */}
+            />
+
+            <Stack.Screen
+                name="JoinRequests"
+                component={JoinRequestsScreen}
+            />
         </Stack.Navigator>
     );
 }

@@ -19,6 +19,7 @@ import {
     Wallet,
     Calendar,
     Users,
+    UserPlus,
 } from 'lucide-react-native';
 
 import { supabase } from '../../config/supabase';
@@ -26,44 +27,76 @@ import { useAuth } from '../../context/AuthContext';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/fonts';
 
-// const TABS = ['Overview', 'Members', 'Schedule', 'Rules'];
-const TABS = ['Overview', 'Members']
 
-/* ------------------------------------------------ */
-/* HELPERS */
-/* ------------------------------------------------ */
+// ============================================================
+// TABS
+// ============================================================
+
+const TABS = ['Overview', 'Members'];
+
+
+// ============================================================
+// HELPERS
+// ============================================================
 
 function formatDate(dateString, options) {
     if (!dateString) {
         return '—';
     }
 
-    return new Date(dateString).toLocaleDateString('en-ZA', options);
+    return new Date(dateString).toLocaleDateString(
+        'en-ZA',
+        options
+    );
 }
+
 
 function formatRand(amount) {
-    return Number(amount || 0).toLocaleString('en-ZA', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
+    return Number(amount || 0).toLocaleString(
+        'en-ZA',
+        {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }
+    );
 }
 
+
 function getCurrentMonthRange() {
+
     const now = new Date();
 
     const year = now.getFullYear();
     const month = now.getMonth();
 
-    const start = new Date(year, month, 1);
-    const end = new Date(year, month + 1, 0);
+    const start = new Date(
+        year,
+        month,
+        1
+    );
+
+    const end = new Date(
+        year,
+        month + 1,
+        0
+    );
+
 
     const format = (date) => {
+
         const yyyy = date.getFullYear();
-        const mm = String(date.getMonth() + 1).padStart(2, '0');
-        const dd = String(date.getDate()).padStart(2, '0');
+
+        const mm = String(
+            date.getMonth() + 1
+        ).padStart(2, '0');
+
+        const dd = String(
+            date.getDate()
+        ).padStart(2, '0');
 
         return `${yyyy}-${mm}-${dd}`;
     };
+
 
     return {
         start: format(start),
@@ -71,49 +104,77 @@ function getCurrentMonthRange() {
     };
 }
 
-/* ------------------------------------------------ */
-/* TAB BAR */
-/* ------------------------------------------------ */
 
-function TabBar({ active, onChange }) {
+// ============================================================
+// TAB BAR
+// ============================================================
+
+function TabBar({
+    active,
+    onChange,
+}) {
+
     return (
+
         <View style={styles.tabBar}>
+
             {TABS.map((tab) => {
-                const isActive = tab === active;
+
+                const isActive =
+                    tab === active;
 
                 return (
+
                     <Pressable
                         key={tab}
                         style={[
                             styles.tabPill,
-                            isActive && styles.tabPillActive,
+                            isActive &&
+                                styles.tabPillActive,
                         ]}
-                        onPress={() => onChange(tab)}
+                        onPress={() =>
+                            onChange(tab)
+                        }
                     >
+
                         <Text
                             style={[
                                 styles.tabText,
-                                isActive && styles.tabTextActive,
+                                isActive &&
+                                    styles.tabTextActive,
                             ]}
                         >
                             {tab}
                         </Text>
+
                     </Pressable>
+
                 );
+
             })}
+
         </View>
+
     );
 }
 
-/* ------------------------------------------------ */
-/* OVERVIEW */
-/* ------------------------------------------------ */
 
-function OverviewTab({ stokvel, stats }) {
+// ============================================================
+// OVERVIEW TAB
+// ============================================================
+
+function OverviewTab({
+    stokvel,
+    stats,
+}) {
+
     return (
+
         <View>
 
+            {/* ================================================= */}
             {/* TOTAL SAVINGS */}
+            {/* ================================================= */}
 
             <View style={styles.balanceCard}>
 
@@ -123,38 +184,56 @@ function OverviewTab({ stokvel, stats }) {
                         TOTAL POOLED SAVINGS
                     </Text>
 
+
                     <View style={styles.activeBadge}>
+
                         <Text style={styles.activeBadgeText}>
                             {stokvel.status?.toUpperCase() || 'ACTIVE'}
                         </Text>
+
                     </View>
 
                 </View>
+
 
                 <Text style={styles.balanceAmount}>
                     R{formatRand(stats.totalPooled)}
                 </Text>
 
+
                 <View style={styles.balanceBottom}>
 
                     <View>
+
                         <Text style={styles.balanceStatLabel}>
                             Contribution
                         </Text>
 
+
                         <Text style={styles.balanceStatValue}>
-                            R{formatRand(stokvel.contribution_amount)}
+
+                            R{formatRand(
+                                stokvel.contribution_amount
+                            )}
+
                             {' / '}
+
                             {stokvel.contribution_frequency}
+
                         </Text>
+
                     </View>
 
+
                     <View style={styles.balanceStatRight}>
+
                         <Text style={styles.balanceStatLabel}>
                             Next Payout
                         </Text>
 
+
                         <Text style={styles.balanceStatValue}>
+
                             {formatDate(
                                 stats.nextPayoutDate,
                                 {
@@ -162,14 +241,19 @@ function OverviewTab({ stokvel, stats }) {
                                     month: 'short',
                                 }
                             )}
+
                         </Text>
+
                     </View>
 
                 </View>
 
             </View>
 
+
+            {/* ================================================= */}
             {/* CONTRIBUTIONS */}
+            {/* ================================================= */}
 
             <View style={styles.contributionsCard}>
 
@@ -177,13 +261,17 @@ function OverviewTab({ stokvel, stats }) {
                     THIS MONTH'S CONTRIBUTIONS
                 </Text>
 
+
                 <View style={styles.contributionsHeader}>
 
                     <View style={styles.progressCircle}>
+
                         <Text style={styles.progressCircleText}>
                             {stats.paidCount}/{stats.totalMembers}
                         </Text>
+
                     </View>
+
 
                     <View style={styles.contributionsInfo}>
 
@@ -191,16 +279,23 @@ function OverviewTab({ stokvel, stats }) {
                             {stats.paidCount} of {stats.totalMembers} Members Paid
                         </Text>
 
+
                         <Text style={styles.contributionsSub}>
+
                             R{formatRand(stats.collected)}
+
                             {' of '}
+
                             R{formatRand(stats.expected)}
+
                             {' collected'}
+
                         </Text>
 
                     </View>
 
                 </View>
+
 
                 {/* PROGRESS BAR */}
 
@@ -217,15 +312,21 @@ function OverviewTab({ stokvel, stats }) {
 
                 </View>
 
+
                 <Text style={styles.progressPercentage}>
                     {stats.paymentPercentage}% collected
                 </Text>
 
             </View>
 
+
+            {/* ================================================= */}
             {/* QUICK ACTIONS */}
+            {/* ================================================= */}
 
             <View style={styles.actionRow}>
+
+                {/* GOALS */}
 
                 <Pressable style={styles.actionTile}>
 
@@ -235,17 +336,23 @@ function OverviewTab({ stokvel, stats }) {
                             styles.goalsIcon,
                         ]}
                     >
+
                         <Award
                             size={20}
                             color="#2A7DA6"
                         />
+
                     </View>
+
 
                     <Text style={styles.actionLabel}>
                         Goals
                     </Text>
 
                 </Pressable>
+
+
+                {/* PAYOUTS */}
 
                 <Pressable style={styles.actionTile}>
 
@@ -255,17 +362,23 @@ function OverviewTab({ stokvel, stats }) {
                             styles.payoutIcon,
                         ]}
                     >
+
                         <Wallet
                             size={20}
                             color="#C6811F"
                         />
+
                     </View>
+
 
                     <Text style={styles.actionLabel}>
                         Payouts
                     </Text>
 
                 </Pressable>
+
+
+                {/* MEETINGS */}
 
                 <Pressable style={styles.actionTile}>
 
@@ -275,11 +388,14 @@ function OverviewTab({ stokvel, stats }) {
                             styles.meetingIcon,
                         ]}
                     >
+
                         <Calendar
                             size={20}
                             color="#2E6BA6"
                         />
+
                     </View>
+
 
                     <Text style={styles.actionLabel}>
                         Meetings
@@ -290,20 +406,25 @@ function OverviewTab({ stokvel, stats }) {
             </View>
 
         </View>
+
     );
 }
 
-/* ------------------------------------------------ */
-/* MEMBERS */
-/* ------------------------------------------------ */
+
+// ============================================================
+// MEMBERS TAB
+// ============================================================
 
 function MembersTab({
     members,
     stokvelId,
     navigation,
 }) {
+
     if (members.length === 0) {
+
         return (
+
             <View style={styles.emptyCard}>
 
                 <Users
@@ -311,25 +432,37 @@ function MembersTab({
                     color={colors.textSecondary}
                 />
 
+
                 <Text style={styles.emptyTitle}>
                     No members found
                 </Text>
+
 
                 <Text style={styles.emptyText}>
                     This stokvel currently has no active members.
                 </Text>
 
             </View>
+
         );
+
     }
 
+
     return (
+
         <View>
 
             <Text style={styles.memberCountText}>
+
                 {members.length}{' '}
-                {members.length === 1 ? 'Member' : 'Members'}
+
+                {members.length === 1
+                    ? 'Member'
+                    : 'Members'}
+
             </Text>
+
 
             {members.map((member, index) => (
 
@@ -340,7 +473,8 @@ function MembersTab({
                             'MemberProfile',
                             {
                                 stokvelId,
-                                memberId: member.user_id,
+                                memberId:
+                                    member.user_id,
                             }
                         )
                     }
@@ -350,6 +484,8 @@ function MembersTab({
                             styles.memberRowBorder,
                     ]}
                 >
+
+                    {/* PROFILE IMAGE */}
 
                     {member.profile_image_url ? (
 
@@ -368,13 +504,18 @@ function MembersTab({
                                 styles.memberAvatarFallback,
                             ]}
                         >
+
                             <Users
                                 size={18}
                                 color={colors.textSecondary}
                             />
+
                         </View>
 
                     )}
+
+
+                    {/* MEMBER INFO */}
 
                     <View style={styles.memberInfo}>
 
@@ -382,8 +523,11 @@ function MembersTab({
                             {member.full_name || 'Member'}
                         </Text>
 
+
                         <Text style={styles.memberJoined}>
+
                             Joined{' '}
+
                             {formatDate(
                                 member.joined_at,
                                 {
@@ -392,9 +536,13 @@ function MembersTab({
                                     year: 'numeric',
                                 }
                             )}
+
                         </Text>
 
                     </View>
+
+
+                    {/* ROLE */}
 
                     {member.role !== 'member' && (
 
@@ -427,381 +575,98 @@ function MembersTab({
             ))}
 
         </View>
+
     );
 }
 
-/* ------------------------------------------------ */
-/* SCHEDULE */
-/* ------------------------------------------------ */
 
-function ScheduleTab({ scheduleGroups }) {
-    if (scheduleGroups.length === 0) {
-        return (
-            <View style={styles.emptyCard}>
-
-                <Calendar
-                    size={28}
-                    color={colors.textSecondary}
-                />
-
-                <Text style={styles.emptyTitle}>
-                    No scheduled events
-                </Text>
-
-                <Text style={styles.emptyText}>
-                    Upcoming payouts and meetings will appear here.
-                </Text>
-
-            </View>
-        );
-    }
-
-    return (
-        <View>
-
-            {scheduleGroups.map((group) => (
-
-                <View
-                    key={group.month}
-                    style={styles.scheduleGroup}
-                >
-
-                    <Text style={styles.scheduleMonth}>
-                        {group.month}
-                    </Text>
-
-                    {group.items.map((item) => (
-
-                        <View
-                            key={item.id}
-                            style={styles.scheduleCard}
-                        >
-
-                            <View style={styles.scheduleDateBox}>
-
-                                <Text style={styles.scheduleDateDay}>
-                                    {item.day}
-                                </Text>
-
-                                <Text style={styles.scheduleDateMonth}>
-                                    {item.monthShort}
-                                </Text>
-
-                            </View>
-
-                            <View style={styles.scheduleContent}>
-
-                                <Text style={styles.scheduleTitle}>
-                                    {item.title}
-                                </Text>
-
-                                <Text style={styles.scheduleAmount}>
-                                    {item.subtitle}
-                                </Text>
-
-                                {item.tag && (
-
-                                    <View style={styles.scheduleTag}>
-
-                                        <Text style={styles.scheduleTagText}>
-                                            {item.tag}
-                                        </Text>
-
-                                    </View>
-
-                                )}
-
-                            </View>
-
-                        </View>
-
-                    ))}
-
-                </View>
-
-            ))}
-
-        </View>
-    );
-}
-
-/* ------------------------------------------------ */
-/* RULES */
-/* ------------------------------------------------ */
-
-function RulesTab({
-    stokvelId,
-    rules,
-    isAdmin,
-    onRulesChanged,
-}) {
-    const [editing, setEditing] = useState(false);
-    const [newRule, setNewRule] = useState('');
-    const [saving, setSaving] = useState(false);
-
-    async function handleAddRule() {
-
-        if (!newRule.trim()) {
-            Alert.alert(
-                'Missing rule',
-                'Please enter a rule before adding it.'
-            );
-            return;
-        }
-
-        try {
-
-            setSaving(true);
-
-            const { error } = await supabase
-                .from('group_rules')
-                .insert({
-                    stokvel_id: stokvelId,
-                    rule_text: newRule.trim(),
-                    display_order: rules.length,
-                });
-
-            if (error) {
-                throw error;
-            }
-
-            setNewRule('');
-
-            await onRulesChanged();
-
-        } catch (error) {
-
-            Alert.alert(
-                'Failed to add rule',
-                error.message
-            );
-
-        } finally {
-
-            setSaving(false);
-
-        }
-    }
-
-    async function handleDeleteRule(ruleId) {
-
-        Alert.alert(
-            'Remove Rule',
-            'Are you sure you want to remove this rule?',
-            [
-                {
-                    text: 'Cancel',
-                    style: 'cancel',
-                },
-                {
-                    text: 'Remove',
-                    style: 'destructive',
-                    onPress: async () => {
-
-                        const { error } = await supabase
-                            .from('group_rules')
-                            .delete()
-                            .eq('id', ruleId);
-
-                        if (error) {
-
-                            Alert.alert(
-                                'Failed to delete rule',
-                                error.message
-                            );
-
-                            return;
-                        }
-
-                        await onRulesChanged();
-
-                    },
-                },
-            ]
-        );
-    }
-
-    return (
-        <View>
-
-            <Text style={styles.rulesHeading}>
-                GROUP CONSTITUTION
-            </Text>
-
-            {rules.length === 0 ? (
-
-                <View style={styles.emptyCard}>
-
-                    <Text style={styles.emptyTitle}>
-                        No rules yet
-                    </Text>
-
-                    <Text style={styles.emptyText}>
-                        The stokvel constitution has not been added yet.
-                    </Text>
-
-                </View>
-
-            ) : (
-
-                rules.map((rule, index) => (
-
-                    <View
-                        key={rule.id}
-                        style={styles.ruleCard}
-                    >
-
-                        <Text
-                            style={[
-                                styles.ruleText,
-                                editing && {
-                                    marginBottom: 8,
-                                },
-                            ]}
-                        >
-
-                            <Text style={styles.ruleNumber}>
-                                {index + 1}.{' '}
-                            </Text>
-
-                            {rule.rule_text}
-
-                        </Text>
-
-                        {editing && (
-
-                            <Pressable
-                                onPress={() =>
-                                    handleDeleteRule(rule.id)
-                                }
-                            >
-
-                                <Text style={styles.removeRuleText}>
-                                    Remove
-                                </Text>
-
-                            </Pressable>
-
-                        )}
-
-                    </View>
-
-                ))
-
-            )}
-
-            {editing && (
-
-                <View style={styles.addRuleRow}>
-
-                    <TextInput
-                        style={styles.addRuleInput}
-                        placeholder="Type a new rule..."
-                        placeholderTextColor={
-                            colors.textSecondary
-                        }
-                        value={newRule}
-                        onChangeText={setNewRule}
-                        multiline
-                    />
-
-                    <Pressable
-                        style={[
-                            styles.addRuleButton,
-                            saving && {
-                                opacity: 0.6,
-                            },
-                        ]}
-                        onPress={handleAddRule}
-                        disabled={saving}
-                    >
-
-                        <Text style={styles.addRuleButtonText}>
-                            {saving
-                                ? 'ADDING...'
-                                : 'Add Rule'}
-                        </Text>
-
-                    </Pressable>
-
-                </View>
-
-            )}
-
-            {isAdmin && (
-
-                <Pressable
-                    style={styles.editRulesButton}
-                    onPress={() =>
-                        setEditing(!editing)
-                    }
-                >
-
-                    <Text style={styles.editRulesButtonText}>
-                        {editing
-                            ? 'Done Editing'
-                            : 'Edit Rules (Admin Only)'}
-                    </Text>
-
-                </Pressable>
-
-            )}
-
-        </View>
-    );
-}
-
-/* ------------------------------------------------ */
-/* MAIN SCREEN */
-/* ------------------------------------------------ */
+// ============================================================
+// MAIN SCREEN
+// ============================================================
 
 export default function StokvelDetailsScreen({
     route,
     navigation,
 }) {
+
     const { id } = route.params;
 
     const { user } = useAuth();
 
+
+    // ========================================================
+    // STATE
+    // ========================================================
+
     const [activeTab, setActiveTab] =
         useState('Overview');
+
 
     const [stokvel, setStokvel] =
         useState(null);
 
+
     const [members, setMembers] =
         useState([]);
+
 
     const [rules, setRules] =
         useState([]);
 
+
     const [scheduleGroups, setScheduleGroups] =
         useState([]);
 
+
     const [stats, setStats] = useState({
+
         totalPooled: 0,
+
         nextPayoutDate: null,
+
         paidCount: 0,
+
         totalMembers: 0,
+
         collected: 0,
+
         expected: 0,
+
         paymentPercentage: 0,
+
     });
+
 
     const [loading, setLoading] =
         useState(true);
 
+
     const [error, setError] =
         useState('');
 
-    const currentMember = members.find(
-        (member) =>
-            member.user_id === user?.id
-    );
+
+    // ========================================================
+    // CURRENT MEMBER
+    // ========================================================
+
+    const currentMember =
+        members.find(
+            (member) =>
+                member.user_id === user?.id
+        );
+
+
+    // ========================================================
+    // ADMIN PERMISSION
+    // ========================================================
 
     const isAdmin =
-        currentMember?.role === 'admin' ||
-        currentMember?.role === 'treasurer';
+        currentMember?.role === 'admin';
+
+
+    // ========================================================
+    // LOAD DATA
+    // ========================================================
 
     const loadData = useCallback(
         async () => {
@@ -811,34 +676,44 @@ export default function StokvelDetailsScreen({
                 setLoading(true);
                 setError('');
 
-                /* ----------------------------- */
-                /* STOKVEL */
-                /* ----------------------------- */
+
+                // ====================================================
+                // STOKVEL
+                // ====================================================
 
                 const {
                     data: stokvelRow,
                     error: stokvelError,
                 } = await supabase
+
                     .from('stokvels')
+
                     .select('*')
+
                     .eq('id', id)
+
                     .single();
+
 
                 if (stokvelError) {
                     throw stokvelError;
                 }
 
+
                 setStokvel(stokvelRow);
 
-                /* ----------------------------- */
-                /* MEMBERS */
-                /* ----------------------------- */
+
+                // ====================================================
+                // MEMBERS
+                // ====================================================
 
                 const {
                     data: memberRows,
                     error: memberError,
                 } = await supabase
+
                     .from('stokvel_members')
+
                     .select(`
                         user_id,
                         role,
@@ -848,67 +723,107 @@ export default function StokvelDetailsScreen({
                             profile_image_url
                         )
                     `)
+
                     .eq('stokvel_id', id)
+
                     .eq('status', 'active')
-                    .order('joined_at', {
-                        ascending: true,
-                    });
+
+                    .order(
+                        'joined_at',
+                        {
+                            ascending: true,
+                        }
+                    );
+
 
                 if (memberError) {
                     throw memberError;
                 }
 
+
                 const formattedMembers =
-                    (memberRows || []).map((member) => ({
-                        user_id: member.user_id,
-                        role: member.role,
-                        joined_at: member.joined_at,
-                        full_name:
-                            member.profiles?.full_name ||
-                            'Member',
-                        profile_image_url:
-                            member.profiles
-                                ?.profile_image_url ||
-                            null,
-                    }));
+                    (memberRows || []).map(
+                        (member) => ({
 
-                setMembers(formattedMembers);
+                            user_id:
+                                member.user_id,
 
-                /* ----------------------------- */
-                /* RULES */
-                /* ----------------------------- */
+                            role:
+                                member.role,
+
+                            joined_at:
+                                member.joined_at,
+
+                            full_name:
+                                member.profiles?.full_name ||
+                                'Member',
+
+                            profile_image_url:
+                                member.profiles
+                                    ?.profile_image_url ||
+                                null,
+
+                        })
+                    );
+
+
+                setMembers(
+                    formattedMembers
+                );
+
+
+                // ====================================================
+                // RULES
+                // ====================================================
 
                 const {
                     data: ruleRows,
                     error: ruleError,
                 } = await supabase
+
                     .from('group_rules')
+
                     .select('*')
+
                     .eq('stokvel_id', id)
-                    .order('display_order', {
-                        ascending: true,
-                    });
+
+                    .order(
+                        'display_order',
+                        {
+                            ascending: true,
+                        }
+                    );
+
 
                 if (ruleError) {
+
                     console.log(
                         'Rules error:',
                         ruleError.message
                     );
 
                     setRules([]);
+
                 } else {
-                    setRules(ruleRows || []);
+
+                    setRules(
+                        ruleRows || []
+                    );
+
                 }
 
-                /* ----------------------------- */
-                /* PAYOUTS */
-                /* ----------------------------- */
+
+                // ====================================================
+                // PAYOUTS
+                // ====================================================
 
                 const {
                     data: payoutRows,
                     error: payoutError,
                 } = await supabase
+
                     .from('payouts')
+
                     .select(`
                         id,
                         amount,
@@ -918,48 +833,69 @@ export default function StokvelDetailsScreen({
                             full_name
                         )
                     `)
+
                     .eq('stokvel_id', id)
-                    .order('payout_date', {
-                        ascending: true,
-                    });
+
+                    .order(
+                        'payout_date',
+                        {
+                            ascending: true,
+                        }
+                    );
+
 
                 if (payoutError) {
+
                     console.log(
                         'Payout error:',
                         payoutError.message
                     );
+
                 }
 
-                /* ----------------------------- */
-                /* MEETINGS */
-                /* ----------------------------- */
+
+                // ====================================================
+                // MEETINGS
+                // ====================================================
 
                 const {
                     data: meetingRows,
                     error: meetingError,
                 } = await supabase
+
                     .from('meetings')
+
                     .select('*')
+
                     .eq('stokvel_id', id)
-                    .order('scheduled_at', {
-                        ascending: true,
-                    });
+
+                    .order(
+                        'scheduled_at',
+                        {
+                            ascending: true,
+                        }
+                    );
+
 
                 if (meetingError) {
+
                     console.log(
                         'Meeting error:',
                         meetingError.message
                     );
+
                 }
 
-                /* ----------------------------- */
-                /* SCHEDULE */
-                /* ----------------------------- */
+
+                // ====================================================
+                // SCHEDULE
+                // ====================================================
 
                 const today =
                     new Date()
                         .toISOString()
                         .split('T')[0];
+
 
                 const scheduleItems = [
 
@@ -971,39 +907,48 @@ export default function StokvelDetailsScreen({
                                     payout.payout_date
                                 );
 
+
                             return {
+
                                 id:
                                     `payout-${payout.id}`,
+
                                 date,
+
                                 day:
                                     date.getDate(),
+
                                 monthShort:
-                                    date
-                                        .toLocaleDateString(
-                                            'en-ZA',
-                                            {
-                                                month: 'short',
-                                            }
-                                        )
-                                        .toUpperCase(),
+                                    date.toLocaleDateString(
+                                        'en-ZA',
+                                        {
+                                            month: 'short',
+                                        }
+                                    ).toUpperCase(),
+
                                 title:
                                     `Payout to ${
                                         payout.profiles
                                             ?.full_name ||
                                         'Member'
                                     }`,
+
                                 subtitle:
                                     `R${formatRand(
                                         payout.amount
                                     )}`,
+
                                 tag:
                                     payout.payout_date >=
                                     today
                                         ? 'Upcoming'
                                         : null,
+
                             };
+
                         }
                     ),
+
 
                     ...(meetingRows || []).map(
                         (meeting) => {
@@ -1013,24 +958,29 @@ export default function StokvelDetailsScreen({
                                     meeting.scheduled_at
                                 );
 
+
                             return {
+
                                 id:
                                     `meeting-${meeting.id}`,
+
                                 date,
+
                                 day:
                                     date.getDate(),
+
                                 monthShort:
-                                    date
-                                        .toLocaleDateString(
-                                            'en-ZA',
-                                            {
-                                                month: 'short',
-                                            }
-                                        )
-                                        .toUpperCase(),
+                                    date.toLocaleDateString(
+                                        'en-ZA',
+                                        {
+                                            month: 'short',
+                                        }
+                                    ).toUpperCase(),
+
                                 title:
                                     meeting.title ||
                                     'Stokvel Meeting',
+
                                 subtitle:
                                     date.toLocaleTimeString(
                                         'en-ZA',
@@ -1039,10 +989,13 @@ export default function StokvelDetailsScreen({
                                             minute: '2-digit',
                                         }
                                     ),
+
                                 tag:
                                     meeting.location ||
                                     null,
+
                             };
+
                         }
                     ),
 
@@ -1051,29 +1004,40 @@ export default function StokvelDetailsScreen({
                         a.date - b.date
                 );
 
+
                 const groupsMap = {};
 
-                scheduleItems.forEach((item) => {
 
-                    const key =
-                        item.date.toLocaleDateString(
-                            'en-ZA',
-                            {
-                                month: 'long',
-                                year: 'numeric',
-                            }
-                        ).toUpperCase();
+                scheduleItems.forEach(
+                    (item) => {
 
-                    if (!groupsMap[key]) {
-                        groupsMap[key] = [];
+                        const key =
+                            item.date.toLocaleDateString(
+                                'en-ZA',
+                                {
+                                    month: 'long',
+                                    year: 'numeric',
+                                }
+                            ).toUpperCase();
+
+
+                        if (!groupsMap[key]) {
+                            groupsMap[key] = [];
+                        }
+
+
+                        groupsMap[key].push(
+                            item
+                        );
+
                     }
+                );
 
-                    groupsMap[key].push(item);
-
-                });
 
                 setScheduleGroups(
-                    Object.entries(groupsMap).map(
+                    Object.entries(
+                        groupsMap
+                    ).map(
                         ([month, items]) => ({
                             month,
                             items,
@@ -1081,59 +1045,78 @@ export default function StokvelDetailsScreen({
                     )
                 );
 
-                /* ----------------------------- */
-                /* CONTRIBUTIONS */
-                /* ----------------------------- */
+
+                // ====================================================
+                // CURRENT MONTH CONTRIBUTIONS
+                // ====================================================
 
                 const {
                     start,
                     end,
                 } = getCurrentMonthRange();
 
+
                 const {
                     data: currentMonthContributions,
                     error: contributionError,
                 } = await supabase
+
                     .from('contributions')
+
                     .select(
                         'user_id, amount, status, contribution_date'
                     )
+
                     .eq('stokvel_id', id)
+
                     .eq('status', 'paid')
+
                     .gte(
                         'contribution_date',
                         start
                     )
+
                     .lte(
                         'contribution_date',
                         end
                     );
 
+
                 if (contributionError) {
                     throw contributionError;
                 }
 
-                /* ----------------------------- */
-                /* TOTAL POOLED SAVINGS */
-                /* ----------------------------- */
+
+                // ====================================================
+                // TOTAL POOLED SAVINGS
+                // ====================================================
 
                 const {
                     data: allPaidContributions,
                     error: allContributionError,
                 } = await supabase
+
                     .from('contributions')
+
                     .select('amount')
+
                     .eq('stokvel_id', id)
+
                     .eq('status', 'paid');
+
 
                 if (allContributionError) {
                     throw allContributionError;
                 }
 
+
                 const totalPooled =
                     (allPaidContributions || [])
                         .reduce(
-                            (sum, contribution) =>
+                            (
+                                sum,
+                                contribution
+                            ) =>
                                 sum +
                                 Number(
                                     contribution.amount
@@ -1141,9 +1124,10 @@ export default function StokvelDetailsScreen({
                             0
                         );
 
-                /* ----------------------------- */
-                /* MONTHLY STATS */
-                /* ----------------------------- */
+
+                // ====================================================
+                // MONTHLY STATS
+                // ====================================================
 
                 const paidCount =
                     new Set(
@@ -1156,8 +1140,10 @@ export default function StokvelDetailsScreen({
                         )
                     ).size;
 
+
                 const totalMembers =
                     formattedMembers.length;
+
 
                 const expected =
                     Number(
@@ -1165,12 +1151,16 @@ export default function StokvelDetailsScreen({
                         0
                     ) * totalMembers;
 
+
                 const collected =
                     (
                         currentMonthContributions ||
                         []
                     ).reduce(
-                        (sum, contribution) =>
+                        (
+                            sum,
+                            contribution
+                        ) =>
                             sum +
                             Number(
                                 contribution.amount
@@ -1178,21 +1168,24 @@ export default function StokvelDetailsScreen({
                         0
                     );
 
+
                 const paymentPercentage =
                     expected > 0
                         ? Math.min(
-                              100,
-                              Math.round(
-                                  (collected /
-                                      expected) *
-                                      100
-                              )
-                          )
+                            100,
+                            Math.round(
+                                (
+                                    collected /
+                                    expected
+                                ) * 100
+                            )
+                        )
                         : 0;
 
-                /* ----------------------------- */
-                /* NEXT PAYOUT */
-                /* ----------------------------- */
+
+                // ====================================================
+                // NEXT PAYOUT
+                // ====================================================
 
                 const upcomingPayout =
                     (payoutRows || []).find(
@@ -1203,21 +1196,31 @@ export default function StokvelDetailsScreen({
                                 'cancelled'
                     );
 
-                /* ----------------------------- */
-                /* FINAL STATS */
-                /* ----------------------------- */
+
+                // ====================================================
+                // FINAL STATS
+                // ====================================================
 
                 setStats({
+
                     totalPooled,
+
                     nextPayoutDate:
                         upcomingPayout?.payout_date ||
                         null,
+
                     paidCount,
+
                     totalMembers,
+
                     collected,
+
                     expected,
+
                     paymentPercentage,
+
                 });
+
 
             } catch (err) {
 
@@ -1226,10 +1229,12 @@ export default function StokvelDetailsScreen({
                     err.message
                 );
 
+
                 setError(
                     err.message ||
                     'Failed to load stokvel.'
                 );
+
 
             } finally {
 
@@ -1241,16 +1246,26 @@ export default function StokvelDetailsScreen({
         [id]
     );
 
+
+    // ========================================================
+    // INITIAL LOAD
+    // ========================================================
+
     useEffect(() => {
+
         loadData();
+
     }, [loadData]);
 
-    /* ------------------------------------------------ */
-    /* LOADING */
-    /* ------------------------------------------------ */
+
+    // ========================================================
+    // LOADING
+    // ========================================================
 
     if (loading) {
+
         return (
+
             <View style={styles.loadingContainer}>
 
                 <ActivityIndicator
@@ -1258,29 +1273,38 @@ export default function StokvelDetailsScreen({
                     color={colors.primary}
                 />
 
+
                 <Text style={styles.loadingText}>
                     Loading stokvel...
                 </Text>
 
             </View>
+
         );
+
     }
 
-    /* ------------------------------------------------ */
-    /* ERROR */
-    /* ------------------------------------------------ */
+
+    // ========================================================
+    // ERROR
+    // ========================================================
 
     if (error || !stokvel) {
+
         return (
+
             <View style={styles.loadingContainer}>
 
                 <Text style={styles.errorTitle}>
                     Unable to load stokvel
                 </Text>
 
+
                 <Text style={styles.errorText}>
-                    {error || 'Stokvel not found.'}
+                    {error ||
+                        'Stokvel not found.'}
                 </Text>
+
 
                 <Pressable
                     style={styles.retryButton}
@@ -1294,23 +1318,31 @@ export default function StokvelDetailsScreen({
                 </Pressable>
 
             </View>
+
         );
+
     }
 
-    /* ------------------------------------------------ */
-    /* UI */
-    /* ------------------------------------------------ */
+
+    // ========================================================
+    // UI
+    // ========================================================
 
     return (
+
         <ScrollView
             style={styles.container}
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
         >
 
+            {/* ================================================= */}
             {/* HEADER */}
+            {/* ================================================= */}
 
             <View style={styles.header}>
+
+                {/* BACK */}
 
                 <Pressable
                     style={styles.backButton}
@@ -1318,33 +1350,82 @@ export default function StokvelDetailsScreen({
                         navigation.goBack()
                     }
                 >
+
                     <ChevronLeft
                         size={22}
                         color={colors.text}
                     />
+
                 </Pressable>
+
+
+                {/* RIGHT SIDE */}
 
                 <View style={styles.headerRight}>
 
+                    {/* ========================================= */}
+                    {/* JOIN REQUESTS - ADMIN ONLY */}
+                    {/* ========================================= */}
+
+                    {isAdmin && (
+
+                        <Pressable
+                            style={styles.requestsButton}
+                            onPress={() =>
+                                navigation.navigate(
+                                    'JoinRequests',
+                                    {
+                                        stokvelId: id,
+                                    }
+                                )
+                            }
+                        >
+
+                            <UserPlus
+                                size={18}
+                                color={colors.primary}
+                            />
+
+                        </Pressable>
+
+                    )}
+
+
+                    {/* ========================================= */}
+                    {/* INVITE MEMBERS */}
+                    {/* ========================================= */}
+
                     <Pressable
                         style={styles.inviteButton}
-                        onPress={() => navigation.navigate('InviteMember',{ id })}
+                        onPress={() =>
+                            navigation.navigate(
+                                'InviteMember',
+                                {
+                                    id,
+                                }
+                            )
+                        }
                     >
 
-                        <Text
-                            style={styles.inviteButtonText}
-                        >
+                        <Text style={styles.inviteButtonText}>
                             Invite Members
                         </Text>
 
                     </Pressable>
+
+
+                    {/* ========================================= */}
+                    {/* SETTINGS */}
+                    {/* ========================================= */}
 
                     <Pressable
                         style={styles.settingsButton}
                         onPress={() =>
                             navigation.navigate(
                                 'GroupSettings',
-                                { id }
+                                {
+                                    id,
+                                }
                             )
                         }
                     >
@@ -1360,7 +1441,10 @@ export default function StokvelDetailsScreen({
 
             </View>
 
+
+            {/* ================================================= */}
             {/* STOKVEL HEADER */}
+            {/* ================================================= */}
 
             <View style={styles.groupHeader}>
 
@@ -1373,12 +1457,16 @@ export default function StokvelDetailsScreen({
 
                 </View>
 
+
                 <Text style={styles.groupName}>
                     {stokvel.name}
                 </Text>
 
+
                 <Text style={styles.groupMeta}>
+
                     Created{' '}
+
                     {formatDate(
                         stokvel.created_at,
                         {
@@ -1386,23 +1474,33 @@ export default function StokvelDetailsScreen({
                             year: 'numeric',
                         }
                     )}
+
                     {' · '}
+
                     {members.length}{' '}
+
                     {members.length === 1
                         ? 'member'
                         : 'members'}
+
                 </Text>
 
             </View>
 
+
+            {/* ================================================= */}
             {/* TABS */}
+            {/* ================================================= */}
 
             <TabBar
                 active={activeTab}
                 onChange={setActiveTab}
             />
 
+
+            {/* ================================================= */}
             {/* TAB CONTENT */}
+            {/* ================================================= */}
 
             {activeTab === 'Overview' && (
 
@@ -1412,6 +1510,7 @@ export default function StokvelDetailsScreen({
                 />
 
             )}
+
 
             {activeTab === 'Members' && (
 
@@ -1423,43 +1522,29 @@ export default function StokvelDetailsScreen({
 
             )}
 
-            {activeTab === 'Schedule' && (
-
-                <ScheduleTab
-                    scheduleGroups={
-                        scheduleGroups
-                    }
-                />
-
-            )}
-
-            {activeTab === 'Rules' && (
-
-                <RulesTab
-                    stokvelId={id}
-                    rules={rules}
-                    isAdmin={isAdmin}
-                    onRulesChanged={
-                        loadData
-                    }
-                />
-
-            )}
-
         </ScrollView>
+
     );
+
 }
 
-/* ------------------------------------------------ */
-/* STYLES */
-/* ------------------------------------------------ */
+
+// ============================================================
+// STYLES
+// ============================================================
 
 const styles = StyleSheet.create({
 
+    // ========================================================
+    // MAIN
+    // ========================================================
+
     container: {
         flex: 1,
-        backgroundColor: colors.background,
+        backgroundColor:
+            colors.background,
     },
+
 
     content: {
         padding: 20,
@@ -1467,7 +1552,10 @@ const styles = StyleSheet.create({
         paddingBottom: 50,
     },
 
-    /* HEADER */
+
+    // ========================================================
+    // HEADER
+    // ========================================================
 
     header: {
         flexDirection: 'row',
@@ -1476,11 +1564,13 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
 
+
     headerRight: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 8,
     },
+
 
     backButton: {
         width: 40,
@@ -1491,18 +1581,46 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 
+
+    // ========================================================
+    // JOIN REQUESTS BUTTON
+    // ========================================================
+
+    requestsButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: colors.white,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: colors.border,
+    },
+
+
+    // ========================================================
+    // INVITE BUTTON
+    // ========================================================
+
     inviteButton: {
-        backgroundColor: colors.primaryDark,
+        backgroundColor:
+            colors.primaryDark,
         borderRadius: 20,
         paddingHorizontal: 16,
         paddingVertical: 10,
     },
+
 
     inviteButtonText: {
         color: colors.white,
         fontFamily: fonts.semibold,
         fontSize: 12,
     },
+
+
+    // ========================================================
+    // SETTINGS
+    // ========================================================
 
     settingsButton: {
         width: 40,
@@ -1513,24 +1631,30 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 
-    /* GROUP HEADER */
+
+    // ========================================================
+    // GROUP HEADER
+    // ========================================================
 
     groupHeader: {
         alignItems: 'center',
         marginBottom: 24,
     },
 
+
     groupBadge: {
         width: 72,
         height: 72,
         borderRadius: 36,
-        backgroundColor: colors.primaryLight,
+        backgroundColor:
+            colors.primaryLight,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 14,
         borderWidth: 3,
         borderColor: colors.border,
     },
+
 
     groupName: {
         fontFamily: fonts.bold,
@@ -1540,6 +1664,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
 
+
     groupMeta: {
         fontFamily: fonts.regular,
         fontSize: 12,
@@ -1547,7 +1672,10 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
 
-    /* TABS */
+
+    // ========================================================
+    // TABS
+    // ========================================================
 
     tabBar: {
         flexDirection: 'row',
@@ -1559,6 +1687,7 @@ const styles = StyleSheet.create({
         borderColor: colors.border,
     },
 
+
     tabPill: {
         flex: 1,
         paddingVertical: 9,
@@ -1566,9 +1695,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
 
+
     tabPillActive: {
-        backgroundColor: colors.primaryDark,
+        backgroundColor:
+            colors.primaryDark,
     },
+
 
     tabText: {
         fontFamily: fonts.semibold,
@@ -1576,18 +1708,24 @@ const styles = StyleSheet.create({
         color: colors.textSecondary,
     },
 
+
     tabTextActive: {
         color: colors.white,
     },
 
-    /* BALANCE */
+
+    // ========================================================
+    // BALANCE
+    // ========================================================
 
     balanceCard: {
-        backgroundColor: colors.primaryDark,
+        backgroundColor:
+            colors.primaryDark,
         borderRadius: 20,
         padding: 22,
         marginBottom: 16,
     },
+
 
     balanceTop: {
         flexDirection: 'row',
@@ -1596,12 +1734,14 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
 
+
     balanceLabel: {
         color: colors.white,
         opacity: 0.7,
         fontFamily: fonts.semibold,
         fontSize: 11,
     },
+
 
     activeBadge: {
         backgroundColor:
@@ -1611,11 +1751,13 @@ const styles = StyleSheet.create({
         paddingVertical: 4,
     },
 
+
     activeBadgeText: {
         color: colors.white,
         fontFamily: fonts.semibold,
         fontSize: 10,
     },
+
 
     balanceAmount: {
         color: colors.white,
@@ -1624,14 +1766,17 @@ const styles = StyleSheet.create({
         marginBottom: 22,
     },
 
+
     balanceBottom: {
         flexDirection: 'row',
         justifyContent: 'space-between',
     },
 
+
     balanceStatRight: {
         alignItems: 'flex-end',
     },
+
 
     balanceStatLabel: {
         color: colors.white,
@@ -1641,6 +1786,7 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
 
+
     balanceStatValue: {
         color: colors.white,
         fontFamily: fonts.semibold,
@@ -1648,7 +1794,10 @@ const styles = StyleSheet.create({
         textTransform: 'capitalize',
     },
 
-    /* CONTRIBUTIONS */
+
+    // ========================================================
+    // CONTRIBUTIONS
+    // ========================================================
 
     contributionsCard: {
         backgroundColor: colors.white,
@@ -1656,6 +1805,7 @@ const styles = StyleSheet.create({
         padding: 18,
         marginBottom: 16,
     },
+
 
     contributionsLabel: {
         fontFamily: fonts.semibold,
@@ -1665,10 +1815,12 @@ const styles = StyleSheet.create({
         marginBottom: 14,
     },
 
+
     contributionsHeader: {
         flexDirection: 'row',
         alignItems: 'center',
     },
+
 
     progressCircle: {
         width: 56,
@@ -1681,15 +1833,18 @@ const styles = StyleSheet.create({
         marginRight: 16,
     },
 
+
     progressCircleText: {
         fontFamily: fonts.bold,
         fontSize: 12,
         color: colors.text,
     },
 
+
     contributionsInfo: {
         flex: 1,
     },
+
 
     contributionsHeadline: {
         fontFamily: fonts.semibold,
@@ -1698,11 +1853,13 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
 
+
     contributionsSub: {
         fontFamily: fonts.regular,
         fontSize: 12,
         color: colors.textSecondary,
     },
+
 
     progressBarBackground: {
         height: 7,
@@ -1712,11 +1869,13 @@ const styles = StyleSheet.create({
         marginTop: 18,
     },
 
+
     progressBarFill: {
         height: '100%',
         borderRadius: 10,
         backgroundColor: colors.primary,
     },
+
 
     progressPercentage: {
         fontFamily: fonts.semibold,
@@ -1726,13 +1885,17 @@ const styles = StyleSheet.create({
         textAlign: 'right',
     },
 
-    /* ACTIONS */
+
+    // ========================================================
+    // QUICK ACTIONS
+    // ========================================================
 
     actionRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginBottom: 6,
     },
+
 
     actionTile: {
         width: '31%',
@@ -1741,6 +1904,7 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         alignItems: 'center',
     },
+
 
     actionIconWrapper: {
         width: 40,
@@ -1751,17 +1915,21 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
 
+
     goalsIcon: {
         backgroundColor: '#DCEEF5',
     },
+
 
     payoutIcon: {
         backgroundColor: '#FCEBD5',
     },
 
+
     meetingIcon: {
         backgroundColor: '#DDEAF5',
     },
+
 
     actionLabel: {
         fontFamily: fonts.semibold,
@@ -1769,7 +1937,10 @@ const styles = StyleSheet.create({
         color: colors.text,
     },
 
-    /* MEMBERS */
+
+    // ========================================================
+    // MEMBERS
+    // ========================================================
 
     memberCountText: {
         fontFamily: fonts.semibold,
@@ -1777,6 +1948,7 @@ const styles = StyleSheet.create({
         color: colors.textSecondary,
         marginBottom: 10,
     },
+
 
     memberRow: {
         flexDirection: 'row',
@@ -1788,7 +1960,9 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
 
+
     memberRowBorder: {},
+
 
     memberAvatar: {
         width: 44,
@@ -1797,15 +1971,19 @@ const styles = StyleSheet.create({
         marginRight: 14,
     },
 
+
     memberAvatarFallback: {
-        backgroundColor: colors.primaryLight,
+        backgroundColor:
+            colors.primaryLight,
         justifyContent: 'center',
         alignItems: 'center',
     },
 
+
     memberInfo: {
         flex: 1,
     },
+
 
     memberName: {
         fontFamily: fonts.semibold,
@@ -1814,11 +1992,13 @@ const styles = StyleSheet.create({
         marginBottom: 2,
     },
 
+
     memberJoined: {
         fontFamily: fonts.regular,
         fontSize: 12,
         color: colors.textSecondary,
     },
+
 
     roleBadge: {
         borderRadius: 20,
@@ -1826,183 +2006,36 @@ const styles = StyleSheet.create({
         paddingVertical: 5,
     },
 
+
     roleBadgeAdmin: {
         backgroundColor: '#DDF3E8',
     },
 
+
     roleBadgeTreasurer: {
         backgroundColor: '#FCEBD5',
     },
+
 
     roleBadgeText: {
         fontFamily: fonts.semibold,
         fontSize: 10,
     },
 
+
     roleBadgeTextAdmin: {
         color: '#127A4F',
     },
+
 
     roleBadgeTextTreasurer: {
         color: '#C6811F',
     },
 
-    /* SCHEDULE */
 
-    scheduleGroup: {
-        marginBottom: 20,
-    },
-
-    scheduleMonth: {
-        fontFamily: fonts.semibold,
-        fontSize: 12,
-        color: colors.textSecondary,
-        marginBottom: 10,
-    },
-
-    scheduleCard: {
-        flexDirection: 'row',
-        backgroundColor: colors.white,
-        borderRadius: 14,
-        padding: 14,
-        marginBottom: 10,
-    },
-
-    scheduleDateBox: {
-        width: 48,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: colors.primaryLight,
-        borderRadius: 10,
-        paddingVertical: 8,
-        marginRight: 14,
-    },
-
-    scheduleDateDay: {
-        fontFamily: fonts.bold,
-        fontSize: 16,
-        color: colors.primary,
-    },
-
-    scheduleDateMonth: {
-        fontFamily: fonts.semibold,
-        fontSize: 10,
-        color: colors.primary,
-    },
-
-    scheduleContent: {
-        flex: 1,
-    },
-
-    scheduleTitle: {
-        fontFamily: fonts.semibold,
-        fontSize: 14,
-        color: colors.text,
-        marginBottom: 3,
-    },
-
-    scheduleAmount: {
-        fontFamily: fonts.bold,
-        fontSize: 15,
-        color: colors.primary,
-        marginBottom: 6,
-    },
-
-    scheduleTag: {
-        alignSelf: 'flex-start',
-        backgroundColor: colors.background,
-        borderRadius: 10,
-        paddingHorizontal: 8,
-        paddingVertical: 3,
-    },
-
-    scheduleTagText: {
-        fontFamily: fonts.regular,
-        fontSize: 10,
-        color: colors.textSecondary,
-    },
-
-    /* RULES */
-
-    rulesHeading: {
-        fontFamily: fonts.semibold,
-        fontSize: 11,
-        color: colors.textSecondary,
-        letterSpacing: 0.3,
-        marginBottom: 12,
-    },
-
-    ruleCard: {
-        backgroundColor: colors.white,
-        borderRadius: 14,
-        padding: 16,
-        marginBottom: 10,
-    },
-
-    ruleText: {
-        fontFamily: fonts.regular,
-        fontSize: 14,
-        color: colors.text,
-        lineHeight: 20,
-    },
-
-    ruleNumber: {
-        fontFamily: fonts.bold,
-        color: colors.primary,
-    },
-
-    editRulesButton: {
-        backgroundColor: colors.primaryDark,
-        borderRadius: 30,
-        paddingVertical: 16,
-        alignItems: 'center',
-        marginTop: 10,
-    },
-
-    editRulesButtonText: {
-        color: colors.white,
-        fontFamily: fonts.semibold,
-        fontSize: 14,
-    },
-
-    removeRuleText: {
-        fontFamily: fonts.semibold,
-        fontSize: 12,
-        color: colors.danger,
-    },
-
-    addRuleRow: {
-        marginBottom: 16,
-    },
-
-    addRuleInput: {
-        backgroundColor: colors.white,
-        borderWidth: 1,
-        borderColor: colors.border,
-        borderRadius: 14,
-        padding: 14,
-        fontFamily: fonts.regular,
-        fontSize: 14,
-        color: colors.text,
-        minHeight: 60,
-        textAlignVertical: 'top',
-        marginBottom: 10,
-    },
-
-    addRuleButton: {
-        backgroundColor: colors.primaryLight,
-        borderRadius: 12,
-        paddingVertical: 12,
-        alignItems: 'center',
-    },
-
-    addRuleButtonText: {
-        fontFamily: fonts.semibold,
-        fontSize: 13,
-        color: colors.primary,
-    },
-
-    /* EMPTY STATES */
+    // ========================================================
+    // EMPTY STATES
+    // ========================================================
 
     emptyCard: {
         backgroundColor: colors.white,
@@ -2010,6 +2043,7 @@ const styles = StyleSheet.create({
         padding: 30,
         alignItems: 'center',
     },
+
 
     emptyTitle: {
         fontFamily: fonts.semibold,
@@ -2019,6 +2053,7 @@ const styles = StyleSheet.create({
         marginBottom: 5,
     },
 
+
     emptyText: {
         fontFamily: fonts.regular,
         fontSize: 12,
@@ -2027,15 +2062,20 @@ const styles = StyleSheet.create({
         lineHeight: 18,
     },
 
-    /* LOADING */
+
+    // ========================================================
+    // LOADING
+    // ========================================================
 
     loadingContainer: {
         flex: 1,
-        backgroundColor: colors.background,
+        backgroundColor:
+            colors.background,
         justifyContent: 'center',
         alignItems: 'center',
         padding: 30,
     },
+
 
     loadingText: {
         fontFamily: fonts.regular,
@@ -2044,7 +2084,10 @@ const styles = StyleSheet.create({
         marginTop: 12,
     },
 
-    /* ERROR */
+
+    // ========================================================
+    // ERROR
+    // ========================================================
 
     errorTitle: {
         fontFamily: fonts.bold,
@@ -2054,6 +2097,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
 
+
     errorText: {
         fontFamily: fonts.regular,
         fontSize: 13,
@@ -2062,12 +2106,15 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
 
+
     retryButton: {
-        backgroundColor: colors.primaryDark,
+        backgroundColor:
+            colors.primaryDark,
         borderRadius: 25,
         paddingHorizontal: 25,
         paddingVertical: 12,
     },
+
 
     retryButtonText: {
         color: colors.white,
