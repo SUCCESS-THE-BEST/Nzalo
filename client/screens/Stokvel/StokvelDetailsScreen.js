@@ -1,26 +1,31 @@
-import { useEffect, useState, useCallback } from 'react';
+import {
+    useCallback,
+    useEffect,
+    useState,
+} from 'react';
 
 import {
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+    ActivityIndicator,
+    Alert,
+    Image,
     Pressable,
     ScrollView,
-    Image,
-    Alert,
-    ActivityIndicator,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
 
 import {
+    Award,
+    Calendar,
     ChevronLeft,
     Settings,
-    Award,
-    Wallet,
-    Calendar,
-    Users,
     UserPlus,
+    Users,
+    Wallet,
 } from 'lucide-react-native';
+
+import { useFocusEffect } from '@react-navigation/native';
 
 import { supabase } from '../../config/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -32,7 +37,10 @@ import { fonts } from '../../theme/fonts';
 // TABS
 // ============================================================
 
-const TABS = ['Overview', 'Members'];
+const TABS = [
+    'Overview',
+    'Members',
+];
 
 
 // ============================================================
@@ -40,11 +48,14 @@ const TABS = ['Overview', 'Members'];
 // ============================================================
 
 function formatDate(dateString, options) {
+
     if (!dateString) {
         return '—';
     }
 
-    return new Date(dateString).toLocaleDateString(
+    return new Date(
+        dateString
+    ).toLocaleDateString(
         'en-ZA',
         options
     );
@@ -52,7 +63,10 @@ function formatDate(dateString, options) {
 
 
 function formatRand(amount) {
-    return Number(amount || 0).toLocaleString(
+
+    return Number(
+        amount || 0
+    ).toLocaleString(
         'en-ZA',
         {
             minimumFractionDigits: 2,
@@ -81,22 +95,23 @@ function getCurrentMonthRange() {
         0
     );
 
-
     const format = (date) => {
 
-        const yyyy = date.getFullYear();
+        const yyyy =
+            date.getFullYear();
 
-        const mm = String(
-            date.getMonth() + 1
-        ).padStart(2, '0');
+        const mm =
+            String(
+                date.getMonth() + 1
+            ).padStart(2, '0');
 
-        const dd = String(
-            date.getDate()
-        ).padStart(2, '0');
+        const dd =
+            String(
+                date.getDate()
+            ).padStart(2, '0');
 
         return `${yyyy}-${mm}-${dd}`;
     };
-
 
     return {
         start: format(start),
@@ -121,7 +136,7 @@ function TabBar({
             {TABS.map((tab) => {
 
                 const isActive =
-                    tab === active;
+                    active === tab;
 
                 return (
 
@@ -154,13 +169,12 @@ function TabBar({
             })}
 
         </View>
-
     );
 }
 
 
 // ============================================================
-// OVERVIEW TAB
+// OVERVIEW
 // ============================================================
 
 function OverviewTab({
@@ -173,7 +187,7 @@ function OverviewTab({
         <View>
 
             {/* ================================================= */}
-            {/* TOTAL SAVINGS */}
+            {/* BALANCE CARD */}
             {/* ================================================= */}
 
             <View style={styles.balanceCard}>
@@ -184,11 +198,11 @@ function OverviewTab({
                         TOTAL POOLED SAVINGS
                     </Text>
 
-
                     <View style={styles.activeBadge}>
 
                         <Text style={styles.activeBadgeText}>
-                            {stokvel.status?.toUpperCase() || 'ACTIVE'}
+                            {stokvel.status?.toUpperCase() ||
+                                'ACTIVE'}
                         </Text>
 
                     </View>
@@ -209,10 +223,10 @@ function OverviewTab({
                             Contribution
                         </Text>
 
-
                         <Text style={styles.balanceStatValue}>
 
-                            R{formatRand(
+                            R
+                            {formatRand(
                                 stokvel.contribution_amount
                             )}
 
@@ -225,12 +239,15 @@ function OverviewTab({
                     </View>
 
 
-                    <View style={styles.balanceStatRight}>
+                    <View
+                        style={
+                            styles.balanceStatRight
+                        }
+                    >
 
                         <Text style={styles.balanceStatLabel}>
                             Next Payout
                         </Text>
-
 
                         <Text style={styles.balanceStatValue}>
 
@@ -267,7 +284,8 @@ function OverviewTab({
                     <View style={styles.progressCircle}>
 
                         <Text style={styles.progressCircleText}>
-                            {stats.paidCount}/{stats.totalMembers}
+                            {stats.paidCount}/
+                            {stats.totalMembers}
                         </Text>
 
                     </View>
@@ -275,18 +293,34 @@ function OverviewTab({
 
                     <View style={styles.contributionsInfo}>
 
-                        <Text style={styles.contributionsHeadline}>
-                            {stats.paidCount} of {stats.totalMembers} Members Paid
+                        <Text
+                            style={
+                                styles.contributionsHeadline
+                            }
+                        >
+                            {stats.paidCount} of{' '}
+                            {stats.totalMembers}{' '}
+                            Members Paid
                         </Text>
 
 
-                        <Text style={styles.contributionsSub}>
+                        <Text
+                            style={
+                                styles.contributionsSub
+                            }
+                        >
 
-                            R{formatRand(stats.collected)}
+                            R
+                            {formatRand(
+                                stats.collected
+                            )}
 
                             {' of '}
 
-                            R{formatRand(stats.expected)}
+                            R
+                            {formatRand(
+                                stats.expected
+                            )}
 
                             {' collected'}
 
@@ -297,9 +331,11 @@ function OverviewTab({
                 </View>
 
 
-                {/* PROGRESS BAR */}
-
-                <View style={styles.progressBarBackground}>
+                <View
+                    style={
+                        styles.progressBarBackground
+                    }
+                >
 
                     <View
                         style={[
@@ -326,8 +362,6 @@ function OverviewTab({
 
             <View style={styles.actionRow}>
 
-                {/* GOALS */}
-
                 <Pressable style={styles.actionTile}>
 
                     <View
@@ -344,15 +378,12 @@ function OverviewTab({
 
                     </View>
 
-
                     <Text style={styles.actionLabel}>
                         Goals
                     </Text>
 
                 </Pressable>
 
-
-                {/* PAYOUTS */}
 
                 <Pressable style={styles.actionTile}>
 
@@ -370,15 +401,12 @@ function OverviewTab({
 
                     </View>
 
-
                     <Text style={styles.actionLabel}>
                         Payouts
                     </Text>
 
                 </Pressable>
 
-
-                {/* MEETINGS */}
 
                 <Pressable style={styles.actionTile}>
 
@@ -396,7 +424,6 @@ function OverviewTab({
 
                     </View>
 
-
                     <Text style={styles.actionLabel}>
                         Meetings
                     </Text>
@@ -406,7 +433,6 @@ function OverviewTab({
             </View>
 
         </View>
-
     );
 }
 
@@ -421,161 +447,216 @@ function MembersTab({
     navigation,
 }) {
 
-    if (members.length === 0) {
-
-        return (
-
-            <View style={styles.emptyCard}>
-
-                <Users
-                    size={28}
-                    color={colors.textSecondary}
-                />
-
-
-                <Text style={styles.emptyTitle}>
-                    No members found
-                </Text>
-
-
-                <Text style={styles.emptyText}>
-                    This stokvel currently has no active members.
-                </Text>
-
-            </View>
-
-        );
-
-    }
-
-
     return (
 
         <View>
 
-            <Text style={styles.memberCountText}>
+            {/* MEMBER COUNT */}
 
-                {members.length}{' '}
+            <View style={styles.membersHeader}>
 
-                {members.length === 1
-                    ? 'Member'
-                    : 'Members'}
+                <View>
 
-            </Text>
+                    <Text style={styles.memberCountText}>
+                        {members.length}{' '}
+                        {members.length === 1
+                            ? 'Member'
+                            : 'Members'}
+                    </Text>
+
+                    <Text style={styles.memberCountSubtext}>
+                        Active members
+                    </Text>
+
+                </View>
 
 
-            {members.map((member, index) => (
+                <Users
+                    size={22}
+                    color={colors.primary}
+                />
 
-                <Pressable
-                    key={member.user_id}
-                    onPress={() =>
-                        navigation.navigate(
-                            'MemberProfile',
-                            {
-                                stokvelId,
-                                memberId:
-                                    member.user_id,
-                            }
-                        )
-                    }
-                    style={[
-                        styles.memberRow,
-                        index !== members.length - 1 &&
-                            styles.memberRowBorder,
-                    ]}
-                >
+            </View>
 
-                    {/* PROFILE IMAGE */}
 
-                    {member.profile_image_url ? (
+            {/* EMPTY */}
 
-                        <Image
-                            source={{
-                                uri: member.profile_image_url,
-                            }}
-                            style={styles.memberAvatar}
-                        />
+            {members.length === 0 && (
 
-                    ) : (
+                <View style={styles.emptyCard}>
 
-                        <View
-                            style={[
-                                styles.memberAvatar,
-                                styles.memberAvatarFallback,
-                            ]}
-                        >
+                    <Users
+                        size={30}
+                        color={
+                            colors.textSecondary
+                        }
+                    />
 
-                            <Users
-                                size={18}
-                                color={colors.textSecondary}
+                    <Text
+                        style={
+                            styles.emptyTitle
+                        }
+                    >
+                        No members found
+                    </Text>
+
+                    <Text
+                        style={
+                            styles.emptyText
+                        }
+                    >
+                        This stokvel currently has
+                        no active members.
+                    </Text>
+
+                </View>
+
+            )}
+
+
+            {/* MEMBERS */}
+
+            {members.map(
+                (member, index) => (
+
+                    <Pressable
+                        key={member.user_id}
+                        style={[
+                            styles.memberRow,
+                            index ===
+                                members.length - 1 &&
+                                styles.memberRowLast,
+                        ]}
+                        onPress={() =>
+                            navigation.navigate(
+                                'MemberProfile',
+                                {
+                                    stokvelId,
+                                    memberId:
+                                        member.user_id,
+                                }
+                            )
+                        }
+                    >
+
+                        {/* AVATAR */}
+
+                        {member.profile_image_url ? (
+
+                            <Image
+                                source={{
+                                    uri:
+                                        member.profile_image_url,
+                                }}
+                                style={
+                                    styles.memberAvatar
+                                }
                             />
 
-                        </View>
+                        ) : (
 
-                    )}
+                            <View
+                                style={[
+                                    styles.memberAvatar,
+                                    styles.memberAvatarFallback,
+                                ]}
+                            >
 
+                                <Text
+                                    style={
+                                        styles.avatarInitial
+                                    }
+                                >
+                                    {(
+                                        member.full_name ||
+                                        'M'
+                                    )
+                                        .charAt(0)
+                                        .toUpperCase()}
+                                </Text>
 
-                    {/* MEMBER INFO */}
+                            </View>
 
-                    <View style={styles.memberInfo}>
-
-                        <Text style={styles.memberName}>
-                            {member.full_name || 'Member'}
-                        </Text>
-
-
-                        <Text style={styles.memberJoined}>
-
-                            Joined{' '}
-
-                            {formatDate(
-                                member.joined_at,
-                                {
-                                    day: '2-digit',
-                                    month: 'short',
-                                    year: 'numeric',
-                                }
-                            )}
-
-                        </Text>
-
-                    </View>
+                        )}
 
 
-                    {/* ROLE */}
-
-                    {member.role !== 'member' && (
+                        {/* MEMBER DETAILS */}
 
                         <View
-                            style={[
-                                styles.roleBadge,
-                                member.role === 'admin'
-                                    ? styles.roleBadgeAdmin
-                                    : styles.roleBadgeTreasurer,
-                            ]}
+                            style={
+                                styles.memberInfo
+                            }
                         >
 
                             <Text
-                                style={[
-                                    styles.roleBadgeText,
-                                    member.role === 'admin'
-                                        ? styles.roleBadgeTextAdmin
-                                        : styles.roleBadgeTextTreasurer,
-                                ]}
+                                style={
+                                    styles.memberName
+                                }
+                                numberOfLines={1}
                             >
-                                {member.role.toUpperCase()}
+                                {member.full_name ||
+                                    'Member'}
+                            </Text>
+
+
+                            <Text
+                                style={
+                                    styles.memberJoined
+                                }
+                            >
+
+                                Joined{' '}
+
+                                {formatDate(
+                                    member.joined_at,
+                                    {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric',
+                                    }
+                                )}
+
                             </Text>
 
                         </View>
 
-                    )}
 
-                </Pressable>
+                        {/* ROLE */}
 
-            ))}
+                        {member.role !== 'member' && (
+
+                            <View
+                                style={[
+                                    styles.roleBadge,
+                                    member.role ===
+                                        'admin'
+                                        ? styles.roleBadgeAdmin
+                                        : styles.roleBadgeTreasurer,
+                                ]}
+                            >
+
+                                <Text
+                                    style={[
+                                        styles.roleBadgeText,
+                                        member.role ===
+                                            'admin'
+                                            ? styles.roleBadgeTextAdmin
+                                            : styles.roleBadgeTextTreasurer,
+                                    ]}
+                                >
+                                    {member.role.toUpperCase()}
+                                </Text>
+
+                            </View>
+
+                        )}
+
+                    </Pressable>
+
+                )
+            )}
 
         </View>
-
     );
 }
 
@@ -589,9 +670,11 @@ export default function StokvelDetailsScreen({
     navigation,
 }) {
 
-    const { id } = route.params;
+    const { id } =
+        route.params;
 
-    const { user } = useAuth();
+    const { user } =
+        useAuth();
 
 
     // ========================================================
@@ -601,45 +684,28 @@ export default function StokvelDetailsScreen({
     const [activeTab, setActiveTab] =
         useState('Overview');
 
-
     const [stokvel, setStokvel] =
         useState(null);
-
 
     const [members, setMembers] =
         useState([]);
 
+    const [pendingRequests, setPendingRequests] =
+        useState(0);
 
-    const [rules, setRules] =
-        useState([]);
-
-
-    const [scheduleGroups, setScheduleGroups] =
-        useState([]);
-
-
-    const [stats, setStats] = useState({
-
-        totalPooled: 0,
-
-        nextPayoutDate: null,
-
-        paidCount: 0,
-
-        totalMembers: 0,
-
-        collected: 0,
-
-        expected: 0,
-
-        paymentPercentage: 0,
-
-    });
-
+    const [stats, setStats] =
+        useState({
+            totalPooled: 0,
+            nextPayoutDate: null,
+            paidCount: 0,
+            totalMembers: 0,
+            collected: 0,
+            expected: 0,
+            paymentPercentage: 0,
+        });
 
     const [loading, setLoading] =
         useState(true);
-
 
     const [error, setError] =
         useState('');
@@ -652,610 +718,470 @@ export default function StokvelDetailsScreen({
     const currentMember =
         members.find(
             (member) =>
-                member.user_id === user?.id
+                member.user_id ===
+                user?.id
         );
 
 
     // ========================================================
-    // ADMIN PERMISSION
+    // ADMIN
     // ========================================================
 
     const isAdmin =
-        currentMember?.role === 'admin';
+        currentMember?.role ===
+        'admin';
+
+
+    // ========================================================
+    // LOAD JOIN REQUEST COUNT
+    // ========================================================
+
+    const loadPendingRequests =
+        useCallback(
+            async () => {
+
+                if (!user) {
+                    return;
+                }
+
+                const {
+                    data,
+                    error: requestError,
+                } =
+                    await supabase.rpc(
+                        'get_stokvel_join_request_count',
+                        {
+                            _stokvel_id:
+                                id,
+                        }
+                    );
+
+
+                if (requestError) {
+
+                    console.log(
+                        'Join request count error:',
+                        requestError.message
+                    );
+
+                    setPendingRequests(0);
+
+                    return;
+                }
+
+
+                setPendingRequests(
+                    Number(data || 0)
+                );
+
+            },
+            [id, user]
+        );
 
 
     // ========================================================
     // LOAD DATA
     // ========================================================
 
-    const loadData = useCallback(
-        async () => {
+    const loadData =
+        useCallback(
+            async () => {
 
-            try {
+                try {
 
-                setLoading(true);
-                setError('');
-
-
-                // ====================================================
-                // STOKVEL
-                // ====================================================
-
-                const {
-                    data: stokvelRow,
-                    error: stokvelError,
-                } = await supabase
-
-                    .from('stokvels')
-
-                    .select('*')
-
-                    .eq('id', id)
-
-                    .single();
+                    setLoading(true);
+                    setError('');
 
 
-                if (stokvelError) {
-                    throw stokvelError;
-                }
+                    // ==================================================
+                    // STOKVEL
+                    // ==================================================
+
+                    const {
+                        data: stokvelRow,
+                        error: stokvelError,
+                    } =
+                        await supabase
+                            .from('stokvels')
+                            .select('*')
+                            .eq('id', id)
+                            .single();
 
 
-                setStokvel(stokvelRow);
+                    if (stokvelError) {
+                        throw stokvelError;
+                    }
 
 
-                // ====================================================
-                // MEMBERS
-                // ====================================================
-
-                const {
-                    data: memberRows,
-                    error: memberError,
-                } = await supabase
-
-                    .from('stokvel_members')
-
-                    .select(`
-                        user_id,
-                        role,
-                        joined_at,
-                        profiles (
-                            full_name,
-                            profile_image_url
-                        )
-                    `)
-
-                    .eq('stokvel_id', id)
-
-                    .eq('status', 'active')
-
-                    .order(
-                        'joined_at',
-                        {
-                            ascending: true,
-                        }
+                    setStokvel(
+                        stokvelRow
                     );
 
 
-                if (memberError) {
-                    throw memberError;
-                }
-
-
-                const formattedMembers =
-                    (memberRows || []).map(
-                        (member) => ({
-
-                            user_id:
-                                member.user_id,
-
-                            role:
-                                member.role,
-
-                            joined_at:
-                                member.joined_at,
-
-                            full_name:
-                                member.profiles?.full_name ||
-                                'Member',
-
-                            profile_image_url:
-                                member.profiles
-                                    ?.profile_image_url ||
-                                null,
-
-                        })
-                    );
-
-
-                setMembers(
-                    formattedMembers
-                );
-
-
-                // ====================================================
-                // RULES
-                // ====================================================
-
-                const {
-                    data: ruleRows,
-                    error: ruleError,
-                } = await supabase
-
-                    .from('group_rules')
-
-                    .select('*')
-
-                    .eq('stokvel_id', id)
-
-                    .order(
-                        'display_order',
-                        {
-                            ascending: true,
-                        }
-                    );
-
-
-                if (ruleError) {
-
-                    console.log(
-                        'Rules error:',
-                        ruleError.message
-                    );
-
-                    setRules([]);
-
-                } else {
-
-                    setRules(
-                        ruleRows || []
-                    );
-
-                }
-
-
-                // ====================================================
-                // PAYOUTS
-                // ====================================================
-
-                const {
-                    data: payoutRows,
-                    error: payoutError,
-                } = await supabase
-
-                    .from('payouts')
-
-                    .select(`
-                        id,
-                        amount,
-                        payout_date,
-                        status,
-                        profiles:recipient_id (
-                            full_name
-                        )
-                    `)
-
-                    .eq('stokvel_id', id)
-
-                    .order(
-                        'payout_date',
-                        {
-                            ascending: true,
-                        }
-                    );
-
-
-                if (payoutError) {
-
-                    console.log(
-                        'Payout error:',
-                        payoutError.message
-                    );
-
-                }
-
-
-                // ====================================================
-                // MEETINGS
-                // ====================================================
-
-                const {
-                    data: meetingRows,
-                    error: meetingError,
-                } = await supabase
-
-                    .from('meetings')
-
-                    .select('*')
-
-                    .eq('stokvel_id', id)
-
-                    .order(
-                        'scheduled_at',
-                        {
-                            ascending: true,
-                        }
-                    );
-
-
-                if (meetingError) {
-
-                    console.log(
-                        'Meeting error:',
-                        meetingError.message
-                    );
-
-                }
-
-
-                // ====================================================
-                // SCHEDULE
-                // ====================================================
-
-                const today =
-                    new Date()
-                        .toISOString()
-                        .split('T')[0];
-
-
-                const scheduleItems = [
-
-                    ...(payoutRows || []).map(
-                        (payout) => {
-
-                            const date =
-                                new Date(
-                                    payout.payout_date
-                                );
-
-
-                            return {
-
-                                id:
-                                    `payout-${payout.id}`,
-
-                                date,
-
-                                day:
-                                    date.getDate(),
-
-                                monthShort:
-                                    date.toLocaleDateString(
-                                        'en-ZA',
-                                        {
-                                            month: 'short',
-                                        }
-                                    ).toUpperCase(),
-
-                                title:
-                                    `Payout to ${
-                                        payout.profiles
-                                            ?.full_name ||
-                                        'Member'
-                                    }`,
-
-                                subtitle:
-                                    `R${formatRand(
-                                        payout.amount
-                                    )}`,
-
-                                tag:
-                                    payout.payout_date >=
-                                    today
-                                        ? 'Upcoming'
-                                        : null,
-
-                            };
-
-                        }
-                    ),
-
-
-                    ...(meetingRows || []).map(
-                        (meeting) => {
-
-                            const date =
-                                new Date(
-                                    meeting.scheduled_at
-                                );
-
-
-                            return {
-
-                                id:
-                                    `meeting-${meeting.id}`,
-
-                                date,
-
-                                day:
-                                    date.getDate(),
-
-                                monthShort:
-                                    date.toLocaleDateString(
-                                        'en-ZA',
-                                        {
-                                            month: 'short',
-                                        }
-                                    ).toUpperCase(),
-
-                                title:
-                                    meeting.title ||
-                                    'Stokvel Meeting',
-
-                                subtitle:
-                                    date.toLocaleTimeString(
-                                        'en-ZA',
-                                        {
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                        }
-                                    ),
-
-                                tag:
-                                    meeting.location ||
-                                    null,
-
-                            };
-
-                        }
-                    ),
-
-                ].sort(
-                    (a, b) =>
-                        a.date - b.date
-                );
-
-
-                const groupsMap = {};
-
-
-                scheduleItems.forEach(
-                    (item) => {
-
-                        const key =
-                            item.date.toLocaleDateString(
-                                'en-ZA',
-                                {
-                                    month: 'long',
-                                    year: 'numeric',
-                                }
-                            ).toUpperCase();
-
-
-                        if (!groupsMap[key]) {
-                            groupsMap[key] = [];
-                        }
-
-
-                        groupsMap[key].push(
-                            item
+                    // ==================================================
+                    // MEMBERS
+                    // ==================================================
+
+                    const {
+                        data: memberRows,
+                        error: memberError,
+                    } =
+                        await supabase.rpc(
+                            'get_stokvel_members',
+                            {
+                                _stokvel_id:
+                                    id,
+                            }
                         );
 
+
+                    if (memberError) {
+                        throw memberError;
                     }
-                );
 
 
-                setScheduleGroups(
-                    Object.entries(
-                        groupsMap
-                    ).map(
-                        ([month, items]) => ({
-                            month,
-                            items,
-                        })
-                    )
-                );
+                    const formattedMembers =
+                        (
+                            memberRows ||
+                            []
+                        ).map(
+                            (member) => ({
+
+                                user_id:
+                                    member.user_id,
+
+                                role:
+                                    member.role,
+
+                                joined_at:
+                                    member.joined_at,
+
+                                full_name:
+                                    member.full_name ||
+                                    'Member',
+
+                                profile_image_url:
+                                    member.profile_image_url ||
+                                    null,
+
+                            })
+                        );
 
 
-                // ====================================================
-                // CURRENT MONTH CONTRIBUTIONS
-                // ====================================================
-
-                const {
-                    start,
-                    end,
-                } = getCurrentMonthRange();
-
-
-                const {
-                    data: currentMonthContributions,
-                    error: contributionError,
-                } = await supabase
-
-                    .from('contributions')
-
-                    .select(
-                        'user_id, amount, status, contribution_date'
-                    )
-
-                    .eq('stokvel_id', id)
-
-                    .eq('status', 'paid')
-
-                    .gte(
-                        'contribution_date',
-                        start
-                    )
-
-                    .lte(
-                        'contribution_date',
-                        end
+                    setMembers(
+                        formattedMembers
                     );
 
 
-                if (contributionError) {
-                    throw contributionError;
-                }
+                    // ==================================================
+                    // JOIN REQUESTS
+                    // ==================================================
+
+                    await loadPendingRequests();
 
 
-                // ====================================================
-                // TOTAL POOLED SAVINGS
-                // ====================================================
+                    // ==================================================
+                    // CONTRIBUTIONS - CURRENT MONTH
+                    // ==================================================
 
-                const {
-                    data: allPaidContributions,
-                    error: allContributionError,
-                } = await supabase
-
-                    .from('contributions')
-
-                    .select('amount')
-
-                    .eq('stokvel_id', id)
-
-                    .eq('status', 'paid');
+                    const {
+                        start,
+                        end,
+                    } =
+                        getCurrentMonthRange();
 
 
-                if (allContributionError) {
-                    throw allContributionError;
-                }
+                    const {
+                        data:
+                            currentMonthContributions,
+                        error:
+                            contributionError,
+                    } =
+                        await supabase
+                            .from(
+                                'contributions'
+                            )
+                            .select(
+                                'user_id, amount, status, contribution_date'
+                            )
+                            .eq(
+                                'stokvel_id',
+                                id
+                            )
+                            .eq(
+                                'status',
+                                'paid'
+                            )
+                            .gte(
+                                'contribution_date',
+                                start
+                            )
+                            .lte(
+                                'contribution_date',
+                                end
+                            );
 
 
-                const totalPooled =
-                    (allPaidContributions || [])
-                        .reduce(
+                    if (contributionError) {
+                        throw contributionError;
+                    }
+
+
+                    // ==================================================
+                    // ALL CONTRIBUTIONS
+                    // ==================================================
+
+                    const {
+                        data:
+                            allPaidContributions,
+                        error:
+                            allContributionError,
+                    } =
+                        await supabase
+                            .from(
+                                'contributions'
+                            )
+                            .select(
+                                'amount'
+                            )
+                            .eq(
+                                'stokvel_id',
+                                id
+                            )
+                            .eq(
+                                'status',
+                                'paid'
+                            );
+
+
+                    if (allContributionError) {
+                        throw allContributionError;
+                    }
+
+
+                    const totalPooled =
+                        (
+                            allPaidContributions ||
+                            []
+                        ).reduce(
                             (
-                                sum,
+                                total,
                                 contribution
                             ) =>
-                                sum +
+                                total +
                                 Number(
-                                    contribution.amount
+                                    contribution.amount ||
+                                    0
                                 ),
                             0
                         );
 
 
-                // ====================================================
-                // MONTHLY STATS
-                // ====================================================
+                    // ==================================================
+                    // MEMBER COUNT
+                    // ==================================================
 
-                const paidCount =
-                    new Set(
+                    const totalMembers =
+                        formattedMembers.length;
+
+
+                    // ==================================================
+                    // PAID MEMBERS
+                    // ==================================================
+
+                    const paidCount =
+                        new Set(
+                            (
+                                currentMonthContributions ||
+                                []
+                            ).map(
+                                (
+                                    contribution
+                                ) =>
+                                    contribution.user_id
+                            )
+                        ).size;
+
+
+                    // ==================================================
+                    // EXPECTED
+                    // ==================================================
+
+                    const expected =
+                        Number(
+                            stokvelRow.contribution_amount ||
+                            0
+                        ) *
+                        totalMembers;
+
+
+                    // ==================================================
+                    // COLLECTED
+                    // ==================================================
+
+                    const collected =
                         (
                             currentMonthContributions ||
                             []
-                        ).map(
-                            (contribution) =>
-                                contribution.user_id
-                        )
-                    ).size;
+                        ).reduce(
+                            (
+                                total,
+                                contribution
+                            ) =>
+                                total +
+                                Number(
+                                    contribution.amount ||
+                                    0
+                                ),
+                            0
+                        );
 
 
-                const totalMembers =
-                    formattedMembers.length;
+                    // ==================================================
+                    // PERCENTAGE
+                    // ==================================================
 
-
-                const expected =
-                    Number(
-                        stokvelRow?.contribution_amount ||
-                        0
-                    ) * totalMembers;
-
-
-                const collected =
-                    (
-                        currentMonthContributions ||
-                        []
-                    ).reduce(
-                        (
-                            sum,
-                            contribution
-                        ) =>
-                            sum +
-                            Number(
-                                contribution.amount
-                            ),
-                        0
-                    );
-
-
-                const paymentPercentage =
-                    expected > 0
-                        ? Math.min(
-                            100,
-                            Math.round(
-                                (
-                                    collected /
-                                    expected
-                                ) * 100
+                    const paymentPercentage =
+                        expected > 0
+                            ? Math.min(
+                                100,
+                                Math.round(
+                                    (
+                                        collected /
+                                        expected
+                                    ) *
+                                        100
+                                )
                             )
-                        )
-                        : 0;
+                            : 0;
 
 
-                // ====================================================
-                // NEXT PAYOUT
-                // ====================================================
+                    // ==================================================
+                    // PAYOUTS
+                    // ==================================================
 
-                const upcomingPayout =
-                    (payoutRows || []).find(
-                        (payout) =>
-                            payout.payout_date >=
-                                today &&
-                            payout.status !==
-                                'cancelled'
+                    const {
+                        data: payoutRows,
+                        error: payoutError,
+                    } =
+                        await supabase
+                            .from('payouts')
+                            .select(`
+                                id,
+                                amount,
+                                payout_date,
+                                status,
+                                profiles:recipient_id (
+                                    full_name
+                                )
+                            `)
+                            .eq(
+                                'stokvel_id',
+                                id
+                            )
+                            .order(
+                                'payout_date',
+                                {
+                                    ascending:
+                                        true,
+                                }
+                            );
+
+
+                    if (payoutError) {
+
+                        console.log(
+                            'Payout error:',
+                            payoutError.message
+                        );
+
+                    }
+
+
+                    const today =
+                        new Date()
+                            .toISOString()
+                            .split('T')[0];
+
+
+                    const upcomingPayout =
+                        (
+                            payoutRows ||
+                            []
+                        ).find(
+                            (payout) =>
+                                payout.payout_date >=
+                                    today &&
+                                payout.status !==
+                                    'cancelled'
+                        );
+
+
+                    // ==================================================
+                    // STATS
+                    // ==================================================
+
+                    setStats({
+
+                        totalPooled,
+
+                        nextPayoutDate:
+                            upcomingPayout?.payout_date ||
+                            null,
+
+                        paidCount,
+
+                        totalMembers,
+
+                        collected,
+
+                        expected,
+
+                        paymentPercentage,
+
+                    });
+
+
+                } catch (err) {
+
+                    console.log(
+                        'Stokvel details error:',
+                        err.message
                     );
 
+                    setError(
+                        err.message ||
+                        'Failed to load stokvel.'
+                    );
 
-                // ====================================================
-                // FINAL STATS
-                // ====================================================
+                } finally {
 
-                setStats({
+                    setLoading(false);
 
-                    totalPooled,
+                }
 
-                    nextPayoutDate:
-                        upcomingPayout?.payout_date ||
-                        null,
-
-                    paidCount,
-
-                    totalMembers,
-
-                    collected,
-
-                    expected,
-
-                    paymentPercentage,
-
-                });
+            },
+            [
+                id,
+                loadPendingRequests,
+            ]
+        );
 
 
-            } catch (err) {
+    // ========================================================
+    // REFRESH WHEN SCREEN BECOMES ACTIVE
+    // ========================================================
 
-                console.log(
-                    'Stokvel details error:',
-                    err.message
-                );
+    useFocusEffect(
+        useCallback(
+            () => {
 
+                loadData();
 
-                setError(
-                    err.message ||
-                    'Failed to load stokvel.'
-                );
-
-
-            } finally {
-
-                setLoading(false);
-
-            }
-
-        },
-        [id]
+            },
+            [loadData]
+        )
     );
-
-
-    // ========================================================
-    // INITIAL LOAD
-    // ========================================================
-
-    useEffect(() => {
-
-        loadData();
-
-    }, [loadData]);
 
 
     // ========================================================
@@ -1266,22 +1192,30 @@ export default function StokvelDetailsScreen({
 
         return (
 
-            <View style={styles.loadingContainer}>
+            <View
+                style={
+                    styles.loadingContainer
+                }
+            >
 
                 <ActivityIndicator
                     size="large"
-                    color={colors.primary}
+                    color={
+                        colors.primary
+                    }
                 />
 
-
-                <Text style={styles.loadingText}>
+                <Text
+                    style={
+                        styles.loadingText
+                    }
+                >
                     Loading stokvel...
                 </Text>
 
             </View>
 
         );
-
     }
 
 
@@ -1293,47 +1227,69 @@ export default function StokvelDetailsScreen({
 
         return (
 
-            <View style={styles.loadingContainer}>
+            <View
+                style={
+                    styles.loadingContainer
+                }
+            >
 
-                <Text style={styles.errorTitle}>
+                <Text
+                    style={
+                        styles.errorTitle
+                    }
+                >
                     Unable to load stokvel
                 </Text>
 
 
-                <Text style={styles.errorText}>
+                <Text
+                    style={
+                        styles.errorText
+                    }
+                >
                     {error ||
                         'Stokvel not found.'}
                 </Text>
 
 
                 <Pressable
-                    style={styles.retryButton}
-                    onPress={loadData}
+                    style={
+                        styles.retryButton
+                    }
+                    onPress={
+                        loadData
+                    }
                 >
 
-                    <Text style={styles.retryButtonText}>
+                    <Text
+                        style={
+                            styles.retryButtonText
+                        }
+                    >
                         Try Again
                     </Text>
 
                 </Pressable>
 
             </View>
-
         );
-
     }
 
 
     // ========================================================
-    // UI
+    // SCREEN
     // ========================================================
 
     return (
 
         <ScrollView
             style={styles.container}
-            contentContainerStyle={styles.content}
-            showsVerticalScrollIndicator={false}
+            contentContainerStyle={
+                styles.content
+            }
+            showsVerticalScrollIndicator={
+                false
+            }
         >
 
             {/* ================================================= */}
@@ -1342,10 +1298,10 @@ export default function StokvelDetailsScreen({
 
             <View style={styles.header}>
 
-                {/* BACK */}
-
                 <Pressable
-                    style={styles.backButton}
+                    style={
+                        styles.backButton
+                    }
                     onPress={() =>
                         navigation.goBack()
                     }
@@ -1353,38 +1309,75 @@ export default function StokvelDetailsScreen({
 
                     <ChevronLeft
                         size={22}
-                        color={colors.text}
+                        color={
+                            colors.text
+                        }
                     />
 
                 </Pressable>
 
 
-                {/* RIGHT SIDE */}
-
-                <View style={styles.headerRight}>
+                <View
+                    style={
+                        styles.headerRight
+                    }
+                >
 
                     {/* ========================================= */}
-                    {/* JOIN REQUESTS - ADMIN ONLY */}
+                    {/* JOIN REQUESTS */}
                     {/* ========================================= */}
 
                     {isAdmin && (
 
                         <Pressable
-                            style={styles.requestsButton}
+                            style={
+                                styles.requestsButton
+                            }
                             onPress={() =>
                                 navigation.navigate(
                                     'JoinRequests',
                                     {
-                                        stokvelId: id,
+                                        stokvelId:
+                                            id,
                                     }
                                 )
                             }
                         >
 
                             <UserPlus
-                                size={18}
-                                color={colors.primary}
+                                size={19}
+                                color={
+                                    colors.primary
+                                }
                             />
+
+
+                            {/* NOTIFICATION BADGE */}
+
+                            {pendingRequests > 0 && (
+
+                                <View
+                                    style={
+                                        styles.requestBadge
+                                    }
+                                >
+
+                                    <Text
+                                        style={
+                                            styles.requestBadgeText
+                                        }
+                                    >
+
+                                        {pendingRequests >
+                                        99
+                                            ? '99+'
+                                            : pendingRequests}
+
+                                    </Text>
+
+                                </View>
+
+                            )}
 
                         </Pressable>
 
@@ -1392,11 +1385,13 @@ export default function StokvelDetailsScreen({
 
 
                     {/* ========================================= */}
-                    {/* INVITE MEMBERS */}
+                    {/* INVITE */}
                     {/* ========================================= */}
 
                     <Pressable
-                        style={styles.inviteButton}
+                        style={
+                            styles.inviteButton
+                        }
                         onPress={() =>
                             navigation.navigate(
                                 'InviteMember',
@@ -1407,7 +1402,11 @@ export default function StokvelDetailsScreen({
                         }
                     >
 
-                        <Text style={styles.inviteButtonText}>
+                        <Text
+                            style={
+                                styles.inviteButtonText
+                            }
+                        >
                             Invite Members
                         </Text>
 
@@ -1419,7 +1418,9 @@ export default function StokvelDetailsScreen({
                     {/* ========================================= */}
 
                     <Pressable
-                        style={styles.settingsButton}
+                        style={
+                            styles.settingsButton
+                        }
                         onPress={() =>
                             navigation.navigate(
                                 'GroupSettings',
@@ -1432,7 +1433,9 @@ export default function StokvelDetailsScreen({
 
                         <Settings
                             size={18}
-                            color={colors.text}
+                            color={
+                                colors.text
+                            }
                         />
 
                     </Pressable>
@@ -1446,24 +1449,42 @@ export default function StokvelDetailsScreen({
             {/* STOKVEL HEADER */}
             {/* ================================================= */}
 
-            <View style={styles.groupHeader}>
+            <View
+                style={
+                    styles.groupHeader
+                }
+            >
 
-                <View style={styles.groupBadge}>
+                <View
+                    style={
+                        styles.groupBadge
+                    }
+                >
 
                     <Users
                         size={28}
-                        color={colors.primary}
+                        color={
+                            colors.primary
+                        }
                     />
 
                 </View>
 
 
-                <Text style={styles.groupName}>
+                <Text
+                    style={
+                        styles.groupName
+                    }
+                >
                     {stokvel.name}
                 </Text>
 
 
-                <Text style={styles.groupMeta}>
+                <Text
+                    style={
+                        styles.groupMeta
+                    }
+                >
 
                     Created{' '}
 
@@ -1494,38 +1515,54 @@ export default function StokvelDetailsScreen({
 
             <TabBar
                 active={activeTab}
-                onChange={setActiveTab}
+                onChange={
+                    setActiveTab
+                }
             />
 
 
             {/* ================================================= */}
-            {/* TAB CONTENT */}
+            {/* OVERVIEW */}
             {/* ================================================= */}
 
-            {activeTab === 'Overview' && (
+            {activeTab ===
+                'Overview' && (
 
                 <OverviewTab
-                    stokvel={stokvel}
-                    stats={stats}
+                    stokvel={
+                        stokvel
+                    }
+                    stats={
+                        stats
+                    }
                 />
 
             )}
 
 
-            {activeTab === 'Members' && (
+            {/* ================================================= */}
+            {/* MEMBERS */}
+            {/* ================================================= */}
+
+            {activeTab ===
+                'Members' && (
 
                 <MembersTab
-                    members={members}
-                    stokvelId={stokvel.id}
-                    navigation={navigation}
+                    members={
+                        members
+                    }
+                    stokvelId={
+                        stokvel.id
+                    }
+                    navigation={
+                        navigation
+                    }
                 />
 
             )}
 
         </ScrollView>
-
     );
-
 }
 
 
@@ -1536,7 +1573,7 @@ export default function StokvelDetailsScreen({
 const styles = StyleSheet.create({
 
     // ========================================================
-    // MAIN
+    // CONTAINER
     // ========================================================
 
     container: {
@@ -1560,7 +1597,8 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
+        justifyContent:
+            'space-between',
         marginBottom: 20,
     },
 
@@ -1576,30 +1614,66 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: colors.white,
-        justifyContent: 'center',
+        backgroundColor:
+            colors.white,
+        justifyContent:
+            'center',
         alignItems: 'center',
     },
 
 
     // ========================================================
-    // JOIN REQUESTS BUTTON
+    // JOIN REQUEST BUTTON
     // ========================================================
 
     requestsButton: {
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: colors.white,
-        justifyContent: 'center',
+        backgroundColor:
+            colors.white,
+        justifyContent:
+            'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: colors.border,
+        borderColor:
+            colors.border,
+        position: 'relative',
     },
 
 
     // ========================================================
-    // INVITE BUTTON
+    // REQUEST NOTIFICATION
+    // ========================================================
+
+    requestBadge: {
+        position: 'absolute',
+        top: -5,
+        right: -5,
+        minWidth: 19,
+        height: 19,
+        borderRadius: 10,
+        backgroundColor: '#D93025',
+        justifyContent:
+            'center',
+        alignItems: 'center',
+        paddingHorizontal: 4,
+        borderWidth: 2,
+        borderColor:
+            colors.background,
+    },
+
+
+    requestBadgeText: {
+        color: colors.white,
+        fontFamily:
+            fonts.bold,
+        fontSize: 9,
+    },
+
+
+    // ========================================================
+    // INVITE
     // ========================================================
 
     inviteButton: {
@@ -1613,7 +1687,8 @@ const styles = StyleSheet.create({
 
     inviteButtonText: {
         color: colors.white,
-        fontFamily: fonts.semibold,
+        fontFamily:
+            fonts.semibold,
         fontSize: 12,
     },
 
@@ -1626,8 +1701,10 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: colors.white,
-        justifyContent: 'center',
+        backgroundColor:
+            colors.white,
+        justifyContent:
+            'center',
         alignItems: 'center',
     },
 
@@ -1648,27 +1725,33 @@ const styles = StyleSheet.create({
         borderRadius: 36,
         backgroundColor:
             colors.primaryLight,
-        justifyContent: 'center',
+        justifyContent:
+            'center',
         alignItems: 'center',
         marginBottom: 14,
         borderWidth: 3,
-        borderColor: colors.border,
+        borderColor:
+            colors.border,
     },
 
 
     groupName: {
-        fontFamily: fonts.bold,
+        fontFamily:
+            fonts.bold,
         fontSize: 20,
-        color: colors.text,
+        color:
+            colors.text,
         marginBottom: 4,
         textAlign: 'center',
     },
 
 
     groupMeta: {
-        fontFamily: fonts.regular,
+        fontFamily:
+            fonts.regular,
         fontSize: 12,
-        color: colors.textSecondary,
+        color:
+            colors.textSecondary,
         textAlign: 'center',
     },
 
@@ -1679,12 +1762,14 @@ const styles = StyleSheet.create({
 
     tabBar: {
         flexDirection: 'row',
-        backgroundColor: colors.white,
+        backgroundColor:
+            colors.white,
         borderRadius: 14,
         padding: 4,
         marginBottom: 20,
         borderWidth: 1,
-        borderColor: colors.border,
+        borderColor:
+            colors.border,
     },
 
 
@@ -1692,7 +1777,8 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingVertical: 9,
         borderRadius: 10,
-        alignItems: 'center',
+        alignItems:
+            'center',
     },
 
 
@@ -1703,9 +1789,11 @@ const styles = StyleSheet.create({
 
 
     tabText: {
-        fontFamily: fonts.semibold,
+        fontFamily:
+            fonts.semibold,
         fontSize: 11,
-        color: colors.textSecondary,
+        color:
+            colors.textSecondary,
     },
 
 
@@ -1729,8 +1817,10 @@ const styles = StyleSheet.create({
 
     balanceTop: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        justifyContent:
+            'space-between',
+        alignItems:
+            'center',
         marginBottom: 8,
     },
 
@@ -1738,7 +1828,8 @@ const styles = StyleSheet.create({
     balanceLabel: {
         color: colors.white,
         opacity: 0.7,
-        fontFamily: fonts.semibold,
+        fontFamily:
+            fonts.semibold,
         fontSize: 11,
     },
 
@@ -1754,14 +1845,16 @@ const styles = StyleSheet.create({
 
     activeBadgeText: {
         color: colors.white,
-        fontFamily: fonts.semibold,
+        fontFamily:
+            fonts.semibold,
         fontSize: 10,
     },
 
 
     balanceAmount: {
         color: colors.white,
-        fontFamily: fonts.bold,
+        fontFamily:
+            fonts.bold,
         fontSize: 30,
         marginBottom: 22,
     },
@@ -1769,19 +1862,22 @@ const styles = StyleSheet.create({
 
     balanceBottom: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent:
+            'space-between',
     },
 
 
     balanceStatRight: {
-        alignItems: 'flex-end',
+        alignItems:
+            'flex-end',
     },
 
 
     balanceStatLabel: {
         color: colors.white,
         opacity: 0.6,
-        fontFamily: fonts.regular,
+        fontFamily:
+            fonts.regular,
         fontSize: 11,
         marginBottom: 4,
     },
@@ -1789,9 +1885,11 @@ const styles = StyleSheet.create({
 
     balanceStatValue: {
         color: colors.white,
-        fontFamily: fonts.semibold,
+        fontFamily:
+            fonts.semibold,
         fontSize: 13,
-        textTransform: 'capitalize',
+        textTransform:
+            'capitalize',
     },
 
 
@@ -1800,7 +1898,8 @@ const styles = StyleSheet.create({
     // ========================================================
 
     contributionsCard: {
-        backgroundColor: colors.white,
+        backgroundColor:
+            colors.white,
         borderRadius: 16,
         padding: 18,
         marginBottom: 16,
@@ -1808,9 +1907,11 @@ const styles = StyleSheet.create({
 
 
     contributionsLabel: {
-        fontFamily: fonts.semibold,
+        fontFamily:
+            fonts.semibold,
         fontSize: 11,
-        color: colors.textSecondary,
+        color:
+            colors.textSecondary,
         letterSpacing: 0.3,
         marginBottom: 14,
     },
@@ -1827,17 +1928,22 @@ const styles = StyleSheet.create({
         height: 56,
         borderRadius: 28,
         borderWidth: 5,
-        borderColor: colors.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
+        borderColor:
+            colors.primary,
+        justifyContent:
+            'center',
+        alignItems:
+            'center',
         marginRight: 16,
     },
 
 
     progressCircleText: {
-        fontFamily: fonts.bold,
+        fontFamily:
+            fonts.bold,
         fontSize: 12,
-        color: colors.text,
+        color:
+            colors.text,
     },
 
 
@@ -1847,24 +1953,29 @@ const styles = StyleSheet.create({
 
 
     contributionsHeadline: {
-        fontFamily: fonts.semibold,
+        fontFamily:
+            fonts.semibold,
         fontSize: 14,
-        color: colors.text,
+        color:
+            colors.text,
         marginBottom: 4,
     },
 
 
     contributionsSub: {
-        fontFamily: fonts.regular,
+        fontFamily:
+            fonts.regular,
         fontSize: 12,
-        color: colors.textSecondary,
+        color:
+            colors.textSecondary,
     },
 
 
     progressBarBackground: {
         height: 7,
         borderRadius: 10,
-        backgroundColor: colors.background,
+        backgroundColor:
+            colors.background,
         overflow: 'hidden',
         marginTop: 18,
     },
@@ -1873,16 +1984,20 @@ const styles = StyleSheet.create({
     progressBarFill: {
         height: '100%',
         borderRadius: 10,
-        backgroundColor: colors.primary,
+        backgroundColor:
+            colors.primary,
     },
 
 
     progressPercentage: {
-        fontFamily: fonts.semibold,
+        fontFamily:
+            fonts.semibold,
         fontSize: 11,
-        color: colors.textSecondary,
+        color:
+            colors.textSecondary,
         marginTop: 7,
-        textAlign: 'right',
+        textAlign:
+            'right',
     },
 
 
@@ -1892,17 +2007,20 @@ const styles = StyleSheet.create({
 
     actionRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent:
+            'space-between',
         marginBottom: 6,
     },
 
 
     actionTile: {
         width: '31%',
-        backgroundColor: colors.white,
+        backgroundColor:
+            colors.white,
         borderRadius: 15,
         paddingVertical: 16,
-        alignItems: 'center',
+        alignItems:
+            'center',
     },
 
 
@@ -1910,31 +2028,38 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent:
+            'center',
+        alignItems:
+            'center',
         marginBottom: 8,
     },
 
 
     goalsIcon: {
-        backgroundColor: '#DCEEF5',
+        backgroundColor:
+            '#DCEEF5',
     },
 
 
     payoutIcon: {
-        backgroundColor: '#FCEBD5',
+        backgroundColor:
+            '#FCEBD5',
     },
 
 
     meetingIcon: {
-        backgroundColor: '#DDEAF5',
+        backgroundColor:
+            '#DDEAF5',
     },
 
 
     actionLabel: {
-        fontFamily: fonts.semibold,
+        fontFamily:
+            fonts.semibold,
         fontSize: 12,
-        color: colors.text,
+        color:
+            colors.text,
     },
 
 
@@ -1942,18 +2067,43 @@ const styles = StyleSheet.create({
     // MEMBERS
     // ========================================================
 
+    membersHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent:
+            'space-between',
+        backgroundColor:
+            colors.white,
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 12,
+    },
+
+
     memberCountText: {
-        fontFamily: fonts.semibold,
-        fontSize: 12,
-        color: colors.textSecondary,
-        marginBottom: 10,
+        fontFamily:
+            fonts.semibold,
+        fontSize: 14,
+        color:
+            colors.text,
+    },
+
+
+    memberCountSubtext: {
+        fontFamily:
+            fonts.regular,
+        fontSize: 11,
+        color:
+            colors.textSecondary,
+        marginTop: 3,
     },
 
 
     memberRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: colors.white,
+        backgroundColor:
+            colors.white,
         paddingVertical: 14,
         paddingHorizontal: 16,
         borderRadius: 14,
@@ -1961,13 +2111,15 @@ const styles = StyleSheet.create({
     },
 
 
-    memberRowBorder: {},
+    memberRowLast: {
+        marginBottom: 0,
+    },
 
 
     memberAvatar: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: 46,
+        height: 46,
+        borderRadius: 23,
         marginRight: 14,
     },
 
@@ -1975,28 +2127,44 @@ const styles = StyleSheet.create({
     memberAvatarFallback: {
         backgroundColor:
             colors.primaryLight,
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent:
+            'center',
+        alignItems:
+            'center',
+    },
+
+
+    avatarInitial: {
+        fontFamily:
+            fonts.bold,
+        fontSize: 18,
+        color:
+            colors.primary,
     },
 
 
     memberInfo: {
         flex: 1,
+        minWidth: 0,
     },
 
 
     memberName: {
-        fontFamily: fonts.semibold,
+        fontFamily:
+            fonts.semibold,
         fontSize: 14,
-        color: colors.text,
-        marginBottom: 2,
+        color:
+            colors.text,
+        marginBottom: 3,
     },
 
 
     memberJoined: {
-        fontFamily: fonts.regular,
-        fontSize: 12,
-        color: colors.textSecondary,
+        fontFamily:
+            fonts.regular,
+        fontSize: 11,
+        color:
+            colors.textSecondary,
     },
 
 
@@ -2004,22 +2172,26 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         paddingHorizontal: 10,
         paddingVertical: 5,
+        marginLeft: 8,
     },
 
 
     roleBadgeAdmin: {
-        backgroundColor: '#DDF3E8',
+        backgroundColor:
+            '#DDF3E8',
     },
 
 
     roleBadgeTreasurer: {
-        backgroundColor: '#FCEBD5',
+        backgroundColor:
+            '#FCEBD5',
     },
 
 
     roleBadgeText: {
-        fontFamily: fonts.semibold,
-        fontSize: 10,
+        fontFamily:
+            fonts.semibold,
+        fontSize: 9,
     },
 
 
@@ -2034,30 +2206,36 @@ const styles = StyleSheet.create({
 
 
     // ========================================================
-    // EMPTY STATES
+    // EMPTY
     // ========================================================
 
     emptyCard: {
-        backgroundColor: colors.white,
+        backgroundColor:
+            colors.white,
         borderRadius: 16,
         padding: 30,
-        alignItems: 'center',
+        alignItems:
+            'center',
     },
 
 
     emptyTitle: {
-        fontFamily: fonts.semibold,
+        fontFamily:
+            fonts.semibold,
         fontSize: 15,
-        color: colors.text,
+        color:
+            colors.text,
         marginTop: 12,
         marginBottom: 5,
     },
 
 
     emptyText: {
-        fontFamily: fonts.regular,
+        fontFamily:
+            fonts.regular,
         fontSize: 12,
-        color: colors.textSecondary,
+        color:
+            colors.textSecondary,
         textAlign: 'center',
         lineHeight: 18,
     },
@@ -2071,16 +2249,20 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor:
             colors.background,
-        justifyContent: 'center',
-        alignItems: 'center',
+        justifyContent:
+            'center',
+        alignItems:
+            'center',
         padding: 30,
     },
 
 
     loadingText: {
-        fontFamily: fonts.regular,
+        fontFamily:
+            fonts.regular,
         fontSize: 13,
-        color: colors.textSecondary,
+        color:
+            colors.textSecondary,
         marginTop: 12,
     },
 
@@ -2090,19 +2272,25 @@ const styles = StyleSheet.create({
     // ========================================================
 
     errorTitle: {
-        fontFamily: fonts.bold,
+        fontFamily:
+            fonts.bold,
         fontSize: 18,
-        color: colors.text,
+        color:
+            colors.text,
         marginBottom: 8,
-        textAlign: 'center',
+        textAlign:
+            'center',
     },
 
 
     errorText: {
-        fontFamily: fonts.regular,
+        fontFamily:
+            fonts.regular,
         fontSize: 13,
-        color: colors.textSecondary,
-        textAlign: 'center',
+        color:
+            colors.textSecondary,
+        textAlign:
+            'center',
         marginBottom: 20,
     },
 
@@ -2118,7 +2306,8 @@ const styles = StyleSheet.create({
 
     retryButtonText: {
         color: colors.white,
-        fontFamily: fonts.semibold,
+        fontFamily:
+            fonts.semibold,
         fontSize: 13,
     },
 
