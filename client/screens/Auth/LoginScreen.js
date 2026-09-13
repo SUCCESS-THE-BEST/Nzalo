@@ -5,6 +5,7 @@ import {
     TextInput,
     Pressable,
     Alert,
+    ScrollView
 } from 'react-native';
 
 import { useState } from 'react';
@@ -58,7 +59,7 @@ export default function LoginScreen({ navigation }) {
     }
     
     return (
-        <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.container}>
 
             <Text style={styles.title}>
                 Welcome back
@@ -131,7 +132,7 @@ export default function LoginScreen({ navigation }) {
                 </Pressable>
             </View>
 
-        </View>
+        </ScrollView>
     );
 }
 
