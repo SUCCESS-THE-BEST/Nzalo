@@ -581,21 +581,21 @@ export default function HomeScreen() {
                 {/* =================================================
                     QUICK ACTIONS
                 ================================================= */}
-
+{/* 
                 <View style={styles.sectionHeader}>
 
                     <Text style={styles.sectionTitle}>
                         Quick actions
                     </Text>
 
-                </View>
+                </View> */}
 
 
-                <View style={styles.actions}>
+                {/* <View style={styles.actions}> */}
 
                     {/* CONTRIBUTE */}
 
-                    <Pressable
+                    {/* <Pressable
                         style={({ pressed }) => [
                             styles.action,
                             pressed &&
@@ -615,12 +615,12 @@ export default function HomeScreen() {
                             Contribute
                         </Text>
 
-                    </Pressable>
+                    </Pressable> */}
 
 
                     {/* MY STOKVELS */}
 
-                    <Pressable
+                    {/* <Pressable
                         style={({ pressed }) => [
                             styles.action,
                             pressed &&
@@ -645,12 +645,12 @@ export default function HomeScreen() {
                             My Stokvels
                         </Text>
 
-                    </Pressable>
+                    </Pressable> */}
 
 
                     {/* WALLET */}
 
-                    <Pressable
+                    {/* <Pressable
                         style={({ pressed }) => [
                             styles.action,
                             pressed &&
@@ -670,9 +670,9 @@ export default function HomeScreen() {
                             Wallet
                         </Text>
 
-                    </Pressable>
+                    </Pressable> */}
 
-                </View>
+                {/* </View> */}
 
 
                 {/* =================================================

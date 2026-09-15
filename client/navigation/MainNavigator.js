@@ -1,13 +1,14 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import { View, Text, StyleSheet } from 'react-native';
-import { Home, Search, MessageCircle, User,Compass, Import, Bot, Users2, PlusCircle } from 'lucide-react-native';
+import { Home, Search, MessageCircle, User,Compass, Import, Bot, Users2, PlusCircle, CreditCard } from 'lucide-react-native';
 
 import HomeScreen from '../screens/Home/HomeScreen';
 
 import ExploreStack from './ExploreStack';
 import HomeStack from './HomeStack';
 import StokvelStack from './StokvelStack';
+import WalletStack from './WalletStack';
 
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
@@ -72,12 +73,12 @@ export default function MainNavigator() {
                         <TabIcon focused={focused} Icon={Users2} />
                     ),
                     tabBarLabel: ({ focused }) => (
-                        <TabLabel focused={focused} label="MY STOKVELS" />
+                        <TabLabel focused={focused} label="STOKVELS" />
                     ),
                 }}
             />
 
-            {/* <Tab.Screen
+            <Tab.Screen
                 name="Messages"
                 component={HomeScreen}
                 options={{
@@ -88,7 +89,20 @@ export default function MainNavigator() {
                         <TabLabel focused={focused} label="MESSAGES" />
                     ),
                 }}
-            /> */}
+            />
+
+            <Tab.Screen
+                name="Wallet"
+                component={WalletStack}
+                options={{
+                    tabBarIcon: ({ focused }) => (
+                        <TabIcon focused={focused} Icon={CreditCard} />
+                    ),
+                    tabBarLabel: ({ focused }) => (
+                        <TabLabel focused={focused} label="WALLET" />
+                    ),
+                }}
+            />
 
             <Tab.Screen
                 name="Explore"
