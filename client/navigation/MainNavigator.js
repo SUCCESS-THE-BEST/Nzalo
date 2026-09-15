@@ -140,8 +140,8 @@ const styles = StyleSheet.create({
     },
 
     iconWrapper: {
-        width: 44,
-        height: 44,
+        width: 40,
+        height: 40,
         borderRadius: 22,
         justifyContent: 'center',
         alignItems: 'center',
