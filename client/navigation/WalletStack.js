@@ -7,6 +7,7 @@ import PayContributionScreen from '../screens/Wallet/PayContributionScreen';
 import PaymentSuccessScreen from '../screens/Wallet/PaymentSuccessScreen';
 import PaymentFailedScreen from '../screens/Wallet/PaymentFailedScreen';
 import PaystackCheckout from '../screens/Payments/PaystackCheckout';
+import PaystackContributionCheckoutScreen from '../screens/Payments/PaystackCheckoutScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -31,6 +32,11 @@ export default function WalletStack() {
             <Stack.Screen
                 name="PayContribution"
                 component={PayContributionScreen}
+            />
+
+            <Stack.Screen
+                name="PaystackCheckoutContributions"
+                component={PaystackContributionCheckoutScreen}
             />
 
             <Stack.Screen
