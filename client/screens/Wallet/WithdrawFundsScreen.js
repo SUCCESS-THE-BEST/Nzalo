@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -18,14 +18,68 @@ import {
     AlertCircle,
 } from 'lucide-react-native';
 
+import { supabase } from '../../config/supabase';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/fonts';
 
 export default function WithdrawFundsScreen({ navigation }) {
-    const availableBalance = 12340;
 
-    const [amount, setAmount] = useState('5000.00');
+    const [walletBalance, setWalletBalance] = useState(0)
+    const [error, setError] = useState('')
+    const [amount, setAmount] = useState('');
     const [selectedBank, setSelectedBank] = useState('fnb');
+
+    const loadWalletBalance = async () => {
+        try {
+            const {
+                data: { user },
+                error: userError,
+            } = await supabase.auth.getUser();
+
+            if (userError) {
+                throw userError;
+            }
+
+            if (!user) {
+                throw new Error('You are not logged in.');
+            }
+
+            const {
+                data: wallet,
+                error: walletError,
+            } = await supabase
+                .from('wallet_accounts')
+                .select('id, balance, status')
+                .eq('user_id', user.id)
+                .eq('status', 'active')
+                .maybeSingle();
+
+
+            if (walletError) {
+                throw walletError;
+            }
+
+            if (!wallet) {
+                throw new Error(
+                    'Your Nzalo Wallet account was not found.'
+                );
+            }
+
+            setWalletBalance(Number(wallet.balance) || 0);
+
+        } catch (err) {
+            console.error('Load wallet error:', err);
+
+            setError(
+                err?.message ||
+                'Unable to load your wallet balance.'
+            );
+        }
+    };
+
+    useEffect(() => {
+        loadWalletBalance()
+    }, [])
 
     const handleAmountChange = (text) => {
         let cleaned = text.replace(/[^0-9.]/g, '');
@@ -58,12 +112,12 @@ export default function WithdrawFundsScreen({ navigation }) {
         maximumFractionDigits: 2,
     });
 
-    const formattedBalance = availableBalance.toLocaleString('en-ZA', {
+    const formattedBalance = walletBalance.toLocaleString('en-ZA', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     });
 
-    const isOverBalance = numericAmount > availableBalance;
+    const isOverBalance = numericAmount > walletBalance;
     const isInvalid = numericAmount <= 0 || isOverBalance;
 
     const handleWithdraw = () => {
@@ -113,6 +167,20 @@ export default function WithdrawFundsScreen({ navigation }) {
                         </View>
                     </View>
 
+                    {/* Error */}
+                    {error !== '' && (
+                        <View style={styles.errorBox}>
+                            <AlertCircle
+                                size={16}
+                                color="#D64545"
+                            />
+
+                            <Text style={styles.errorText}>
+                                {error}
+                            </Text>
+                        </View>
+                    )}
+
                     {/* Available Balance */}
                     <View style={styles.balanceCard}>
                         <Text style={styles.balanceLabel}>
@@ -134,14 +202,14 @@ export default function WithdrawFundsScreen({ navigation }) {
                             style={[
                                 styles.amountInputWrapper,
                                 isOverBalance &&
-                                    styles.amountInputError,
+                                styles.amountInputError,
                             ]}
                         >
                             <TextInput
                                 value={amount}
                                 onChangeText={handleAmountChange}
                                 keyboardType="decimal-pad"
-                                placeholder="0.00"
+                                placeholder="R0.00"
                                 placeholderTextColor={
                                     colors.textSecondary
                                 }
@@ -200,10 +268,10 @@ export default function WithdrawFundsScreen({ navigation }) {
                             style={({ pressed }) => [
                                 styles.withdrawButton,
                                 isInvalid &&
-                                    styles.withdrawButtonDisabled,
+                                styles.withdrawButtonDisabled,
                                 pressed &&
-                                    !isInvalid &&
-                                    styles.buttonPressed,
+                                !isInvalid &&
+                                styles.buttonPressed,
                             ]}
                             onPress={handleWithdraw}
                             disabled={isInvalid}
@@ -394,6 +462,15 @@ const styles = StyleSheet.create({
         fontSize: 11,
         color: colors.text,
         padding: 0,
+    },
+
+    errorBox: {
+        backgroundColor: '#FDECEC',
+        borderRadius: 12,
+        padding: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 18,
     },
 
     errorRow: {
