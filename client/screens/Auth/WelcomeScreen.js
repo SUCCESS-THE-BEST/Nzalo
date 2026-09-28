@@ -3,65 +3,73 @@ import {
     Text,
     View,
     Pressable,
+    Image,
 } from 'react-native';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../../theme/colors';
 
 export default function WelcomeScreen({ navigation }) {
-
     return (
         <View style={styles.container}>
-            
-            <LinearGradient
-                colors={[colors.primary, colors.primaryDark]}
-                style={styles.gradientBox}
-            >
 
-                <View style={styles.content}>
+            <View style={styles.top}>
+                <Image
+                    source={require('../../assets/welcomeBG.jpeg')}
+                    style={styles.image}
+                    resizeMode="cover"
+                />
 
-                    <View style={styles.logoContainer}>
-                        <Text style={styles.logo}>S</Text>
-                    </View>
-
-                    <Text style={styles.title}>
-                        StokFela
-                    </Text>
-
-                    <Text style={styles.subtitle}>
-                        Your trusted stokvel, digitized.
-                    </Text>
-
+                <View style={styles.overlay} pointerEvents="none">
+                    <LinearGradient
+                        colors={[colors.primary, colors.primaryDark]}
+                        style={StyleSheet.absoluteFill}
+                    />
                 </View>
 
-                <View style={styles.bottom}>
+                <View style={styles.brandRow}>
+                    <Image
+        source={require('../../assets/nzalo-logo-white.png')}
+        style={styles.logo}
+        resizeMode="contain"
+    />
+                </View>
+            </View>
 
-                    <Pressable
-                        style={styles.button}
-                        onPress={() => navigation.navigate('Register')}
-                    >
-                        <Text style={styles.buttonText}>
-                            GET STARTED
-                        </Text>
-                    </Pressable>
+            <View style={styles.sheet}>
 
+                <Text style={styles.title}>
+                    Your trusted stokvel, digitized
+                </Text>
+
+                <Text style={styles.subtitle}>
+                    Save together, track contributions and get paid out
+                    on time, all in one place.
+                </Text>
+
+                <Pressable
+                    style={({ pressed }) => [
+                        styles.button,
+                        pressed && styles.buttonPressed,
+                    ]}
+                    onPress={() => navigation.navigate('Register')}
+                >
+                    <Text style={styles.buttonText}>Get started</Text>
+                </Pressable>
+
+                <View style={styles.loginRow}>
                     <Text style={styles.loginText}>
                         Already have an account?
                     </Text>
-
                     <Pressable
                         onPress={() => navigation.navigate('Login')}
+                        hitSlop={10}
                     >
-                        <Text style={styles.loginButton}>
-                            Log in
-                        </Text>
+                        <Text style={styles.loginButton}> Log in</Text>
                     </Pressable>
-
                 </View>
 
-            </LinearGradient>
-
-
+            </View>
         </View>
     );
 }
@@ -69,80 +77,98 @@ export default function WelcomeScreen({ navigation }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-
-    gradientBox: {
-        height: '100%',
-        width: '100%',
-        padding: 26,
-    },
-
-    content: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-
-    logoContainer: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
         backgroundColor: colors.white,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 16,
     },
 
-    logo: {
-        fontSize: 30,
-        fontWeight: '700',
-        color: colors.primary,
+    top: {
+        flex: 1,
+        backgroundColor: colors.primaryDark,
+    },
+
+    image: {
+        ...StyleSheet.absoluteFillObject,
+        width: '100%',
+        height: '100%',
+        opacity:0.7,
+    },
+
+ 
+
+    brandRow: {
+        position: 'absolute',
+        top: 60,
+        left: 26,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+
+   logo: {
+    width: 90,
+    height:70,
+   }
+,
+    sheet: {
+        backgroundColor: colors.white,
+        borderTopLeftRadius: 36,
+        borderTopRightRadius: 36,
+        marginTop: -32,
+        paddingTop: 36,
+        paddingHorizontal: 26,
+        paddingBottom: 40,
+        alignItems: 'center',
     },
 
     title: {
-        fontSize: 32,
+        fontSize: 28,
         fontWeight: '700',
-        color: colors.white,
+        lineHeight: 34,
+        textAlign: 'center',
+        color: colors.primaryDark,
     },
 
     subtitle: {
-        marginTop: 8,
+        marginTop: 12,
         fontSize: 15,
-        color: colors.white,
-        opacity: 0.8,
-    },
-
-    bottom: {
-        paddingBottom: 35,
-        alignItems: 'center',
+        lineHeight: 22,
+        textAlign: 'center',
+        color: colors.primaryDark,
+        opacity: 0.6,
     },
 
     button: {
         width: '100%',
-        backgroundColor: colors.white,
-        paddingVertical: 16,
+        marginTop: 32,
+        backgroundColor: colors.primary,
+        paddingVertical: 17,
         borderRadius: 30,
         alignItems: 'center',
-        marginBottom: 16,
+    },
+
+    buttonPressed: {
+        opacity: 0.85,
     },
 
     buttonText: {
-        color: colors.primary,
+        color: colors.white,
         fontWeight: '700',
-        fontSize: 14,
+        fontSize: 16,
+    },
+
+    loginRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 20,
     },
 
     loginText: {
-        color: colors.white,
-        opacity: 0.7,
-        fontSize: 13,
+        color: colors.primaryDark,
+        opacity: 0.6,
+        fontSize: 14,
     },
 
     loginButton: {
-        color: colors.white,
+        color: colors.primary,
         fontWeight: '700',
-        marginTop: 6,
+        fontSize: 14,
     },
 });

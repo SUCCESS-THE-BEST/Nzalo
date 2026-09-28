@@ -17,7 +17,8 @@ import { fonts } from '../../theme/fonts';
 import { supabase } from '../../config/supabase';
 import { useAuth } from '../../context/AuthContext';
 
-const DEFAULT_AVATAR = 'https://static.vecteezy.com/system/resources/previews/067/619/141/non_2x/flat-style-cartoon-boy-avatar-smiling-male-profile-icon-for-app-web-and-social-media-vector.jpg';
+const DEFAULT_AVATAR =
+  "https://static.vecteezy.com/system/resources/thumbnails/002/318/271/small/user-profile-icon-free-vector.jpg";
 
 function FormField({ label, value, onChangeText, editable = true, locked = false, keyboardType }) {
 
@@ -304,11 +305,8 @@ const styles = StyleSheet.create({
         width: 38,
         height: 38,
         borderRadius: 19,
-        backgroundColor: colors.white,
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: colors.border,
     },
 
     title: {
@@ -378,7 +376,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         backgroundColor: colors.white,
-        borderRadius: 14,
+        borderRadius: 9,
         borderWidth: 1,
         borderColor: colors.border,
         paddingHorizontal: 16,
@@ -404,7 +402,7 @@ const styles = StyleSheet.create({
     },
 
     saveButton: {
-        backgroundColor: colors.primaryDark,
+        backgroundColor: colors.primary,
         borderRadius: 30,
         paddingVertical: 16,
         alignItems: 'center',

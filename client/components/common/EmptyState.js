@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     },
 
     createButton: {
-        backgroundColor: colors.primaryDark,
+        backgroundColor: colors.primary,
         borderRadius: 30,
         paddingVertical: 16,
         width: '100%',

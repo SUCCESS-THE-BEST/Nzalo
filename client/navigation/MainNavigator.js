@@ -1,6 +1,15 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
-import { View, Text, StyleSheet } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    Pressable,
+    LayoutAnimation,
+    Platform,
+    UIManager,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, Search, MessageCircle, User,Compass, Import, Bot, Users2, PlusCircle, CreditCard } from 'lucide-react-native';
 
 import HomeScreen from '../screens/Home/HomeScreen';
@@ -13,17 +22,23 @@ import WalletStack from './WalletStack';
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
 
+if (
+    Platform.OS === 'android' &&
+    UIManager.setLayoutAnimationEnabledExperimental
+) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
 const Tab = createBottomTabNavigator();
 
 function TabIcon({ focused, Icon }) {
 
     return (
-        <View style={[styles.iconWrapper, focused && styles.iconWrapperActive]}>
-            <Icon
-                color={focused ? colors.white : colors.textSecondary}
-                size={22}
-            />
-        </View>
+        <Icon
+            color={focused ? colors.primaryDark : colors.white}
+            size={21}
+            strokeWidth={focused ? 2.4 : 2}
+        />
     );
 }
 
@@ -40,15 +55,92 @@ function TabLabel({ focused, label }) {
     );
 }
 
+function FloatingTabBar({ state, descriptors, navigation }) {
+
+    const insets = useSafeAreaInsets();
+
+    return (
+        <View
+            style={[
+                styles.wrapper,
+                { paddingBottom: Math.max(insets.bottom, 14) },
+            ]}
+        >
+            <View style={styles.bar}>
+
+                {state.routes.map((route, index) => {
+
+                    const { options } = descriptors[route.key];
+                    const focused = state.index === index;
+
+                    function onPress() {
+
+                        const event = navigation.emit({
+                            type: 'tabPress',
+                            target: route.key,
+                            canPreventDefault: true,
+                        });
+
+                        if (!focused && !event.defaultPrevented) {
+                            LayoutAnimation.configureNext(
+                                LayoutAnimation.create(
+                                    220,
+                                    LayoutAnimation.Types.easeInEaseOut,
+                                    LayoutAnimation.Properties.opacity
+                                )
+                            );
+
+                            navigation.navigate(route.name, route.params);
+                        }
+                    }
+
+                    function onLongPress() {
+                        navigation.emit({
+                            type: 'tabLongPress',
+                            target: route.key,
+                        });
+                    }
+
+                    return (
+                        <Pressable
+                            key={route.key}
+                            onPress={onPress}
+                            onLongPress={onLongPress}
+                            accessibilityRole="button"
+                            accessibilityState={focused ? { selected: true } : {}}
+                            accessibilityLabel={route.name}
+                            style={[
+                                styles.item,
+                                focused && styles.itemActive,
+                            ]}
+                        >
+                            {options.tabBarIcon?.({
+                                focused,
+                                color: focused ? colors.primaryDark : colors.white,
+                                size: 21,
+                            })}
+
+                            {options.tabBarLabel?.({
+                                focused,
+                                color: colors.primaryDark,
+                                children: route.name,
+                            })}
+                        </Pressable>
+                    );
+                })}
+
+            </View>
+        </View>
+    );
+}
+
 export default function MainNavigator() {
 
     return (
         <Tab.Navigator
+            tabBar={(props) => <FloatingTabBar {...props} />}
             screenOptions={{
                 headerShown: false,
-                tabBarShowLabel: true,
-                tabBarStyle: styles.tabBar,
-                tabBarItemStyle: styles.tabItem,
             }}
         >
 
@@ -124,44 +216,47 @@ export default function MainNavigator() {
 
 const styles = StyleSheet.create({
 
-    tabBar: {
-        height: 100,
-        paddingTop: 10,
-        borderTopWidth: 0,
-        elevation: 0,
-        shadowOpacity: 0,
-        backgroundColor: colors.white,
-        overflow: 'visible',
-        marginBottom: 5,
+    wrapper: {
+        paddingHorizontal: 20,
+        paddingTop: 8,
+        backgroundColor: colors.background,
     },
 
-    tabItem: {
-        paddingTop: 4,
-    },
-
-    iconWrapper: {
-        width: 40,
-        height: 40,
-        borderRadius: 22,
-        justifyContent: 'center',
+    bar: {
+        flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-between',
+        height: 60,
+        paddingHorizontal: 10,
+        borderRadius: 32,
+        backgroundColor: colors.primary,
+        shadowColor: colors.primaryDark,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.28,
+        shadowRadius: 14,
+        elevation: 8,
     },
 
-    iconWrapperActive: {
-        backgroundColor: colors.primary,
-        marginTop: -40,
-        shadowColor: colors.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 6,
+    item: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: 32,
+        minWidth: 42,
+        borderRadius: 22,
+    },
+
+    itemActive: {
+        paddingHorizontal: 14,
+        gap: 5,
+        backgroundColor:colors.white,
     },
 
     label: {
         fontFamily: fonts.semibold,
-        fontSize: 11,
-        color: colors.primary,
-        marginTop: -2,
+        fontSize: 10.5,
+        letterSpacing: 0.5,
+        color: colors.primaryDark,
     },
 
 });
