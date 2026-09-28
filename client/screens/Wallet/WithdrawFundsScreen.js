@@ -9,6 +9,7 @@ import {
     TextInput,
     KeyboardAvoidingView,
     Platform,
+    ActivityIndicator,
 } from 'react-native';
 
 import {
@@ -22,64 +23,92 @@ import { supabase } from '../../config/supabase';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/fonts';
 
-export default function WithdrawFundsScreen({ navigation }) {
+const API_BASE = 'http://192.168.137.1:3000/api/paystack-withdrawal';
 
-    const [walletBalance, setWalletBalance] = useState(0)
-    const [error, setError] = useState('')
+// =====================================================
+// LINKED BANK ACCOUNT (fnb only, for now)
+// =====================================================
+// Replace accountNumber with the real account this should
+// pay out to. bankCode must match Paystack's bank list.
+// =====================================================
+
+const bankDetails = {
+    fnb: {
+        accountNumber: '6212345678',
+        bankCode: '250655',
+    },
+};
+
+// =====================================================
+// FETCH AVAILABLE BALANCE FROM SUPABASE
+// =====================================================
+
+async function fetchAvailableBalance() {
+    const {
+        data: { session },
+        error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError) throw sessionError;
+    if (!session) throw new Error('You are not logged in.');
+
+    const { data: wallet, error: walletError } = await supabase
+        .from('wallet_accounts')
+        .select('balance')
+        .eq('user_id', session.user.id)
+        .eq('status', 'active')
+        .maybeSingle();
+
+    if (walletError) throw walletError;
+    if (!wallet) {
+        throw new Error('Your Nzalo Wallet account was not found.');
+    }
+
+    return Number(wallet.balance) || 0;
+}
+
+export default function WithdrawFundsScreen({ navigation }) {
+    const [availableBalance, setAvailableBalance] = useState(0);
+    const [balanceLoading, setBalanceLoading] = useState(true);
+
     const [amount, setAmount] = useState('');
     const [selectedBank, setSelectedBank] = useState('fnb');
 
-    const loadWalletBalance = async () => {
-        try {
-            const {
-                data: { user },
-                error: userError,
-            } = await supabase.auth.getUser();
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
-            if (userError) {
-                throw userError;
-            }
-
-            if (!user) {
-                throw new Error('You are not logged in.');
-            }
-
-            const {
-                data: wallet,
-                error: walletError,
-            } = await supabase
-                .from('wallet_accounts')
-                .select('id, balance, status')
-                .eq('user_id', user.id)
-                .eq('status', 'active')
-                .maybeSingle();
-
-
-            if (walletError) {
-                throw walletError;
-            }
-
-            if (!wallet) {
-                throw new Error(
-                    'Your Nzalo Wallet account was not found.'
-                );
-            }
-
-            setWalletBalance(Number(wallet.balance) || 0);
-
-        } catch (err) {
-            console.error('Load wallet error:', err);
-
-            setError(
-                err?.message ||
-                'Unable to load your wallet balance.'
-            );
-        }
-    };
-
+    // Load the real balance when the screen opens
     useEffect(() => {
-        loadWalletBalance()
-    }, [])
+        let isMounted = true;
+
+        const loadBalance = async () => {
+            try {
+                setBalanceLoading(true);
+                const balance = await fetchAvailableBalance();
+                if (isMounted) {
+                    setAvailableBalance(balance);
+                }
+            } catch (err) {
+                console.error('Load balance error:', err);
+                if (isMounted) {
+                    setError(
+                        err?.message ||
+                            'Unable to load your wallet balance.'
+                    );
+                }
+            } finally {
+                if (isMounted) {
+                    setBalanceLoading(false);
+                }
+            }
+        };
+
+        loadBalance();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     const handleAmountChange = (text) => {
         let cleaned = text.replace(/[^0-9.]/g, '');
@@ -112,24 +141,162 @@ export default function WithdrawFundsScreen({ navigation }) {
         maximumFractionDigits: 2,
     });
 
-    const formattedBalance = walletBalance.toLocaleString('en-ZA', {
+    const formattedBalance = availableBalance.toLocaleString('en-ZA', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     });
 
-    const isOverBalance = numericAmount > walletBalance;
-    const isInvalid = numericAmount <= 0 || isOverBalance;
+    const isOverBalance = numericAmount > availableBalance;
+    const isInvalid =
+        balanceLoading || numericAmount <= 0 || isOverBalance;
 
-    const handleWithdraw = () => {
-        if (isInvalid) {
+    // =====================================================
+    // WITHDRAW MONEY
+    // =====================================================
+
+    const handleWithdraw = async () => {
+        if (isInvalid || loading) {
             return;
         }
 
-        navigation.navigate('PaymentSuccess', {
-            type: 'withdrawal',
-            amount: numericAmount,
-            reference: 'NZL-2026-002',
-        });
+        try {
+            setLoading(true);
+            setError('');
+
+            // ---------------------------------------------
+            // Get logged-in Supabase user
+            // ---------------------------------------------
+
+            const {
+                data: { session },
+                error: sessionError,
+            } = await supabase.auth.getSession();
+
+            if (sessionError) {
+                throw sessionError;
+            }
+
+            if (!session) {
+                throw new Error('You are not logged in.');
+            }
+
+            const userId = session.user.id;
+
+            // ---------------------------------------------
+            // Selected bank details
+            // ---------------------------------------------
+
+            const selectedBankDetails = bankDetails[selectedBank];
+
+            if (!selectedBankDetails) {
+                throw new Error(
+                    'Please select a valid bank account.'
+                );
+            }
+
+            // ---------------------------------------------
+            // Verify the account with Paystack first
+            // (real call, no money moves here)
+            // ---------------------------------------------
+
+            const resolveResponse = await fetch(
+                `${API_BASE}/resolve-account`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${session.access_token}`,
+                    },
+                    body: JSON.stringify({
+                        accountNumber: selectedBankDetails.accountNumber,
+                        bankCode: selectedBankDetails.bankCode,
+                    }),
+                }
+            );
+
+            const resolveData = await resolveResponse.json();
+
+            if (!resolveResponse.ok || !resolveData.success) {
+                throw new Error(
+                    resolveData.message ||
+                        'Could not verify the destination account.'
+                );
+            }
+
+            const accountName = resolveData.accountName;
+
+            // ---------------------------------------------
+            // Send withdrawal request to Express
+            // ---------------------------------------------
+
+            const response = await fetch(
+                `${API_BASE}/withdraw`,
+                {
+                    method: 'POST',
+
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization:
+                            `Bearer ${session.access_token}`,
+                    },
+
+                    body: JSON.stringify({
+                        userId: userId,
+                        amount: numericAmount,
+
+                        accountName: accountName,
+
+                        accountNumber:
+                            selectedBankDetails.accountNumber,
+
+                        bankCode:
+                            selectedBankDetails.bankCode,
+                    }),
+                }
+            );
+
+            const data = await response.json();
+
+            console.log(
+                'Withdrawal response:',
+                data
+            );
+
+            // ---------------------------------------------
+            // Handle API error
+            // ---------------------------------------------
+
+            if (!response.ok || !data.success) {
+                throw new Error(
+                    data.message ||
+                        'Withdrawal could not be processed.'
+                );
+            }
+
+            // ---------------------------------------------
+            // Withdrawal successful
+            // ---------------------------------------------
+
+            navigation.navigate('PaymentSuccess', {
+                type: 'withdrawal',
+                amount: data.amount,
+                reference: data.reference,
+                newBalance: data.newBalance,
+            });
+
+        } catch (error) {
+            console.error(
+                'Withdrawal error:',
+                error
+            );
+
+            setError(
+                error.message ||
+                    'Unable to process withdrawal.'
+            );
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -187,9 +354,16 @@ export default function WithdrawFundsScreen({ navigation }) {
                             Available Balance
                         </Text>
 
-                        <Text style={styles.balanceAmount}>
-                            R{formattedBalance}
-                        </Text>
+                        {balanceLoading ? (
+                            <ActivityIndicator
+                                size="small"
+                                color={colors.primaryDark}
+                            />
+                        ) : (
+                            <Text style={styles.balanceAmount}>
+                                R{formattedBalance}
+                            </Text>
+                        )}
                     </View>
 
                     {/* Withdrawal Amount */}
@@ -202,7 +376,7 @@ export default function WithdrawFundsScreen({ navigation }) {
                             style={[
                                 styles.amountInputWrapper,
                                 isOverBalance &&
-                                styles.amountInputError,
+                                    styles.amountInputError,
                             ]}
                         >
                             <TextInput
@@ -218,7 +392,7 @@ export default function WithdrawFundsScreen({ navigation }) {
                             />
                         </View>
 
-                        {isOverBalance && (
+                        {isOverBalance && !balanceLoading && (
                             <View style={styles.errorRow}>
                                 <AlertCircle
                                     size={13}
@@ -239,7 +413,7 @@ export default function WithdrawFundsScreen({ navigation }) {
                         </Text>
 
                         <BankOption
-                            title="First National Bank (****8901)"
+                            title="First National Bank (****5678)"
                             subtitle="Linked bank account"
                             selected={selectedBank === 'fnb'}
                             onPress={() => setSelectedBank('fnb')}
@@ -268,17 +442,24 @@ export default function WithdrawFundsScreen({ navigation }) {
                             style={({ pressed }) => [
                                 styles.withdrawButton,
                                 isInvalid &&
-                                styles.withdrawButtonDisabled,
+                                    styles.withdrawButtonDisabled,
                                 pressed &&
-                                !isInvalid &&
-                                styles.buttonPressed,
+                                    !isInvalid &&
+                                    styles.buttonPressed,
                             ]}
                             onPress={handleWithdraw}
-                            disabled={isInvalid}
+                            disabled={isInvalid || loading}
                         >
-                            <Text style={styles.withdrawButtonText}>
-                                Withdraw R{formattedAmount}
-                            </Text>
+                            {loading ? (
+                                <ActivityIndicator
+                                    size="small"
+                                    color={colors.white}
+                                />
+                            ) : (
+                                <Text style={styles.withdrawButtonText}>
+                                    Withdraw R{formattedAmount}
+                                </Text>
+                            )}
                         </Pressable>
                     </View>
                 </ScrollView>
@@ -481,6 +662,7 @@ const styles = StyleSheet.create({
     },
 
     errorText: {
+        flex: 1,
         fontFamily: fonts.regular,
         fontSize: 9,
         color: '#D64545',
