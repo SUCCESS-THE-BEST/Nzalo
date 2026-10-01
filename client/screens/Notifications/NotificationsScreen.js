@@ -17,7 +17,7 @@ import {
     UserPlus,
 } from 'lucide-react-native';
 
-import { COLORS } from '../../constants/theme';
+import { colors } from '../../theme/colors';
 
 
 // =========================================================
