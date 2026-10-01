@@ -774,13 +774,9 @@ export default function HomeScreen() {
                                             styles.stokvelCardPressed,
                                     ]}
                                     onPress={() =>
-                                        navigation.navigate(
-                                            'StokvelDetail',
-                                            {
-                                                id:
-                                                    stokvel.id,
-                                            }
-                                        )
+                                        navigation.navigate("StokvelDetail", { 
+                                            id: stokvel.id,
+                                        })
                                     }
                                 >
 

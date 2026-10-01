@@ -31,13 +31,61 @@ export default function PayContributionScreen({ navigation }) {
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [walletBalance, setWalletBalance] = useState(0);
 
     // Mock wallet balance for now.
     // We will connect this to Supabase later.
-    const walletBalance = 12340;
+    const loadWalletBalance = async () => {
+    try {
+        const {
+            data: { user },
+            error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError) {
+            throw userError;
+        }
+
+        if (!user) {
+            throw new Error('You are not logged in.');
+        }
+
+        const {
+            data: wallet,
+            error: walletError,
+        } = await supabase
+            .from('wallet_accounts')
+            .select('id, balance, status')
+            .eq('user_id', user.id)
+            .eq('status', 'active')
+            .maybeSingle();
+
+            
+        if (walletError) {
+            throw walletError;
+        }
+
+        if (!wallet) {
+            throw new Error(
+                'Your Nzalo Wallet account was not found.'
+            );
+        }
+
+        setWalletBalance(Number(wallet.balance) || 0);
+
+    } catch (err) {
+            console.error('Load wallet error:', err);
+
+            setError(
+                err?.message ||
+                'Unable to load your wallet balance.'
+            );
+        }
+    };
 
     useEffect(() => {
         loadStokvels();
+        loadWalletBalance();
     }, []);
 
     async function loadStokvels() {
@@ -147,29 +195,178 @@ export default function PayContributionScreen({ navigation }) {
     const insufficientBalance =
         contributionAmount > walletBalance;
 
-    const handlePayNow = () => {
+  
+    const handleWalletPayment = async () => {
         if (!selectedStokvel) {
+            setError('Please select a stokvel.');
             return;
         }
 
-        if (insufficientBalance) {
-            navigation.navigate('PaymentFailed', {
+        try {
+            setLoading(true);
+            setError('');
+
+            const {
+                data,
+                error: rpcError,
+            } = await supabase.rpc('deposit_from_wallet_for_contribution', {
+                p_stokvel_id: selectedStokvel.id,
+                p_amount: contributionAmount,
+                p_description: `Contribution to ${selectedStokvel.name}`,
+            });
+
+            if (rpcError) {
+                if (rpcError.message?.includes('Insufficient wallet balance')) {
+                    navigation.navigate('PaymentFailed', {
+                        type: 'contribution',
+                        amount: contributionAmount,
+                        stokvelName: selectedStokvel.name,
+                        reason: 'insufficient_balance',
+                    });
+                    return;
+                }
+                setError(rpcError.message || 'Unable to process wallet payment.');
+                return;
+            }
+
+            setWalletBalance(data.newBalance);
+
+            navigation.navigate('PaymentSuccess', {
                 type: 'contribution',
                 amount: contributionAmount,
                 stokvelName: selectedStokvel.name,
-                reason: 'insufficient_balance',
+                reference: data.reference,
+                paymentMethod: 'wallet',
+                newBalance: data.newBalance,
             });
-
-            return;
+        } catch (err) {
+            setError(err?.message || 'Unable to process wallet payment.');
+        } finally {
+            setLoading(false);
         }
+    };
 
-        navigation.navigate('PaymentSuccess', {
+
+   const handlePayNow = async () => {
+    if (!selectedStokvel) {
+        console.log('ERROR: No stokvel selected');
+        return;
+    }
+
+    if (
+        paymentMethod === 'wallet' &&
+        insufficientBalance
+    ) {
+        navigation.navigate('PaymentFailed', {
             type: 'contribution',
             amount: contributionAmount,
             stokvelName: selectedStokvel.name,
-            reference: 'NZL-2026-003',
+            reason: 'insufficient_balance',
         });
+
+        return;
+    }
+
+    try {
+        setLoading(true);
+        setError('');
+        // GET USER
+        const {
+            data: { user },
+            error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError) {
+            throw userError;
+        }
+
+        if (!user) {
+            throw new Error('You are not logged in.');
+        }
+        // GET SESSION
+        const {
+            data: { session },
+            error: sessionError,
+        } = await supabase.auth.getSession();
+
+        if (sessionError) {
+            throw sessionError;
+        }
+        if (!session) {
+            throw new Error('Your session has expired. Please log in again.');
+        }
+        // SEND TO BACKEND
+        const response = await fetch(
+            'http://192.168.137.1:3000/api/paystack-contribution/initialize',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization':
+                        `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({
+                    amount: contributionAmount,
+                    stokvelId: selectedStokvel.id,
+                    userId: user.id,
+                    email: user.email,
+                }),
+            }
+        );
+        // READ RESPONSE
+        const responseText = await response.text();
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (parseError) {
+            console.error(
+                'BACKEND DID NOT RETURN JSON:',
+                parseError
+            );
+
+            throw new Error(
+                'Backend returned an invalid response.'
+            );
+        }
+        // CHECK SUCCESS
+        if (!response.ok) {
+            throw new Error(data.message ||`Backend error: ${response.status}`);
+        }
+        if (!data.success) {
+            throw new Error(data.message ||'Payment initialization failed.');
+        }
+        // GET PAYSTACK URL
+        const authorizationUrl =data.authorizationUrl || data.data?.authorization_url;
+        const reference =data.reference ||
+            data.data?.reference;
+        if (!authorizationUrl) {
+            throw new Error(
+                'Paystack authorization URL is missing.'
+            );
+        }
+        if (!reference) {
+            throw new Error(
+                'Paystack payment reference is missing.'
+            );
+        }
+        // NAVIGATE TO PAYSTACK
+        navigation.navigate(
+            'PaystackCheckoutContributions',
+            {
+                authorizationUrl: authorizationUrl,
+                reference: reference,
+                amount: contributionAmount,
+                stokvelId: selectedStokvel.id,
+                stokvelName: selectedStokvel.name,
+            }
+        );
+    } catch (err) {
+        setError(err?.message ||'Unable to initialize payment.');
+
+        } finally {setLoading(false);}
     };
+
+
 
     if (loading) {
         return (
@@ -495,7 +692,7 @@ export default function PayContributionScreen({ navigation }) {
                                 styles.payButton,
                                 pressed && styles.payButtonPressed,
                             ]}
-                            onPress={handlePayNow}
+                            onPress={ paymentMethod === 'wallet'? handleWalletPayment: handlePayNow}
                         >
                             <Text style={styles.payButtonText}>
                                 Pay Now

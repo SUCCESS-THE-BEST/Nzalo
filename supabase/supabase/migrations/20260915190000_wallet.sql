@@ -271,3 +271,4 @@ from public;
 grant execute
 on function public.get_my_wallet()
 to authenticated;
+

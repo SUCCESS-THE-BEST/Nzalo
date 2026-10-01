@@ -7,9 +7,13 @@ import {
     Pressable,
     SafeAreaView,
     TextInput,
+    Alert,
     KeyboardAvoidingView,
     Platform,
 } from 'react-native';
+
+import {supabase} from '../../config/supabase';
+import {WebView} from 'react-native-webview'
 
 import {
     ArrowLeft,
@@ -56,16 +60,85 @@ export default function DepositFundsScreen({ navigation }) {
         maximumFractionDigits: 2,
     });
 
-    const handleDeposit = () => {
+    const handleDeposit = async () => {
         if (numericAmount <= 0) {
+            Alert.alert("Invalid amount", "Please enter a valid amount.");
             return;
         }
 
-        navigation.navigate('PaymentSuccess', {
-            type: 'deposit',
-            amount: numericAmount,
-            reference: 'NZL-2026-001',
-        });
+        try {
+            // Get the logged-in Supabase user
+            const {
+                data: { user },
+                error: userError
+            } = await supabase.auth.getUser();
+
+            if (userError || !user) {
+                Alert.alert(
+                    "Login required",
+                    "Please log in before making a deposit."
+                );
+                return;
+            }
+
+            // Get current Supabase session
+            const {
+                data: { session },
+                error: sessionError
+            } = await supabase.auth.getSession();
+
+            if (sessionError || !session) {
+                Alert.alert(
+                    "Session expired",
+                    "Please log in again."
+                );
+                return;
+            }
+
+            // Send amount to YOUR backend
+            const response = await fetch(
+                "http://192.168.137.1:3000/paystack/initialize",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({
+                        amount: numericAmount,
+                        email: user.email
+                    })
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                console.log("Paystack initialization error:", result);
+                Alert.alert(
+                    "Payment error",
+                    result.message || "Unable to start payment."
+                );
+                
+                return;
+            }
+
+            console.log("Paystack payment:", result);
+
+            // Open Paystack checkout
+            navigation.navigate("PaystackCheckout", {
+                authorizationUrl: result.authorization_url,
+                reference: result.reference,
+                amount: numericAmount
+            });
+
+        } catch (error) {
+            console.log("Deposit error:", error);
+            Alert.alert(
+                "Error",
+                "Could not start the payment."
+            );
+        }
     };
 
     return (
