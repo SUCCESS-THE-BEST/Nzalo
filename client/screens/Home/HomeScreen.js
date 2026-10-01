@@ -516,15 +516,17 @@ export default function HomeScreen() {
                     </Pressable>
 
 
-                    <Pressable
-                        style={styles.notification}
+                    <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={() =>
+                            navigation.navigate('Notifications')
+                        }
                     >
                         <Bell
                             size={20}
-                            strokeWidth={2}
-                            color={colors.text}
+                            color={COLORS.text}
                         />
-                    </Pressable>
+                    </TouchableOpacity>
 
                 </View>
 

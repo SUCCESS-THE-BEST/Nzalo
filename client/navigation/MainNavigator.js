@@ -9,6 +9,7 @@ import ExploreStack from './ExploreStack';
 import HomeStack from './HomeStack';
 import StokvelStack from './StokvelStack';
 import WalletStack from './WalletStack';
+import MessagesStack from './MessagesStack';
 
 import { colors } from '../theme/colors';
 import { fonts } from '../theme/fonts';
@@ -80,7 +81,7 @@ export default function MainNavigator() {
 
             <Tab.Screen
                 name="Messages"
-                component={HomeScreen}
+                component={MessagesStack}
                 options={{
                     tabBarIcon: ({ focused }) => (
                         <TabIcon focused={focused} Icon={MessageCircle} />
