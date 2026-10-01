@@ -5,6 +5,7 @@ import {
     Pressable,
     ScrollView,
     Image,
+    TouchableOpacity
 } from 'react-native';
 
 import {
@@ -516,15 +517,17 @@ export default function HomeScreen() {
                     </Pressable>
 
 
-                    <Pressable
-                        style={styles.notification}
+                    <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={() =>
+                            navigation.navigate('Notifications')
+                        }
                     >
                         <Bell
                             size={20}
-                            strokeWidth={2}
                             color={colors.text}
                         />
-                    </Pressable>
+                    </TouchableOpacity>
 
                 </View>
 
