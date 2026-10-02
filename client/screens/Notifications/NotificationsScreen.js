@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import {
     FlatList,
@@ -18,73 +18,75 @@ import {
 } from 'lucide-react-native';
 
 import { colors } from '../../theme/colors';
+import { supabase } from '../../config/supabase';
+
 
 
 // =========================================================
 // MOCK NOTIFICATIONS
 // =========================================================
 
-const MOCK_NOTIFICATIONS = [
-    {
-        id: '1',
+// const MOCK_NOTIFICATIONS = [
+//     {
+//         id: '1',
 
-        type: 'contribution',
+//         type: 'contribution',
 
-        title: 'Monthly Contribution Reminder',
+//         title: 'Monthly Contribution Reminder',
 
-        message:
-            'Bambani Stokvel R3,000 is due in 3 days.',
+//         message:
+//             'Bambani Stokvel R3,000 is due in 3 days.',
 
-        time: '2h ago',
+//         time: '2h ago',
 
-        unread: true,
-    },
+//         unread: true,
+//     },
 
-    {
-        id: '2',
+//     {
+//         id: '2',
 
-        type: 'payout',
+//         type: 'payout',
 
-        title: 'Payout Disbursed Successfully',
+//         title: 'Payout Disbursed Successfully',
 
-        message:
-            'R12,340.00 paid to Thabo Molefe.',
+//         message:
+//             'R12,340.00 paid to Thabo Molefe.',
 
-        time: '1d ago',
+//         time: '1d ago',
 
-        unread: false,
-    },
+//         unread: false,
+//     },
 
-    {
-        id: '3',
+//     {
+//         id: '3',
 
-        type: 'meeting',
+//         type: 'meeting',
 
-        title: 'Meeting Invite: AGM 2026',
+//         title: 'Meeting Invite: AGM 2026',
 
-        message:
-            'Group AGM scheduled for March 1 at 14:00.',
+//         message:
+//             'Group AGM scheduled for March 1 at 14:00.',
 
-        time: '2d ago',
+//         time: '2d ago',
 
-        unread: false,
-    },
+//         unread: false,
+//     },
 
-    {
-        id: '4',
+//     {
+//         id: '4',
 
-        type: 'member',
+//         type: 'member',
 
-        title: 'New Member Request',
+//         title: 'New Member Request',
 
-        message:
-            'Lerato Khumalo requested to join your Stokvel.',
+//         message:
+//             'Lerato Khumalo requested to join your Stokvel.',
 
-        time: '3d ago',
+//         time: '3d ago',
 
-        unread: false,
-    },
-];
+//         unread: false,
+//     },
+// ];
 
 
 // =========================================================
@@ -352,8 +354,47 @@ function EmptyNotifications({
 // =========================================================
 // MAIN SCREEN
 // =========================================================
+function formatNotificationTime(createdAt) {
+    const created = new Date(createdAt);
+    const now = new Date();
+
+    const differenceInSeconds = Math.floor(
+        (now - created) / 1000
+    );
+
+    if (differenceInSeconds < 60) {
+        return 'Just now';
+    }
+
+    const differenceInMinutes = Math.floor(
+        differenceInSeconds / 60
+    );
+
+    if (differenceInMinutes < 60) {
+        return `${differenceInMinutes}m ago`;
+    }
+
+    const differenceInHours = Math.floor(
+        differenceInMinutes / 60
+    );
+
+    if (differenceInHours < 24) {
+        return `${differenceInHours}h ago`;
+    }
+
+    const differenceInDays = Math.floor(
+        differenceInHours / 24
+    );
+
+    if (differenceInDays < 7) {
+        return `${differenceInDays}d ago`;
+    }
+
+    return created.toLocaleDateString();
+}
 
 export default function NotificationsScreen({
+    
     navigation,
     route,
 }) {
@@ -368,10 +409,46 @@ export default function NotificationsScreen({
      * from Supabase.
      */
 
-    const [notifications, setNotifications] =
-        useState(MOCK_NOTIFICATIONS);
+    // const [notifications, setNotifications] =
+    //     useState(MOCK_NOTIFICATIONS);
 
+const [notifications, setNotifications] =
+    useState([]);
 
+    useEffect(() => {
+    fetchNotifications();
+}, []);
+
+const fetchNotifications = async () => {
+    const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error(
+            'Error fetching notifications:',
+            error
+        );
+        return;
+    }
+
+    const formattedNotifications = data.map(
+        (notification) => ({
+            ...notification,
+
+            unread: !notification.is_read,
+
+            time: formatNotificationTime(
+                notification.created_at
+            ),
+        })
+    );
+
+    setNotifications(
+        formattedNotifications
+    );
+};
     /*
      * You can force the empty state from
      * navigation if needed:
@@ -405,29 +482,62 @@ export default function NotificationsScreen({
     // HANDLE NOTIFICATION
     // =====================================================
 
-    const handleNotificationPress =
-        (item) => {
+   const handleNotificationPress = async (item) => {
+    const { error } = await supabase
+        .from('notifications')
+        .update({
+            is_read: true,
+        })
+        .eq('id', item.id);
 
-            /*
-             * Mark notification as read.
-             */
+    if (error) {
+        console.error(
+            'Error marking notification as read:',
+            error
+        );
+        return;
+    }
 
-            setNotifications(
-                (current) =>
-                    current.map(
-                        (notification) =>
-                            notification.id ===
-                            item.id
-                                ? {
-                                      ...notification,
-                                      unread: false,
-                                  }
-                                : notification
-                    )
-            );
+    setNotifications((current) =>
+        current.map((notification) =>
+            notification.id === item.id
+                ? {
+                      ...notification,
+                      unread: false,
+                      is_read: true,
+                  }
+                : notification
+        )
+    );
 
+    // Member request notification
+    if (item.type === 'member') {
+        navigation.navigate('Stokvels', {
+            screen: 'JoinRequests',
+            params: {
+                stokvelId: item.stokvel_id,
+            },
+        });
 
-            /*
+        return;
+    }
+
+    // Approved notification
+    if (item.type === 'member_approved') {
+        navigation.navigate('Stokvels', {
+            screen: 'StokvelDetail',
+            params: {
+                id: item.stokvel_id,
+            },
+        });
+
+        return;
+    }
+
+    // Rejected notification
+    // No navigation. It is simply marked as read.
+
+      /*
              * Later we can navigate based
              * on notification type.
              *
@@ -440,15 +550,14 @@ export default function NotificationsScreen({
              * -> Wallet
              *
              * member
-             * -> JoinRequests
+             * -> JoinRequests: success has done this part
              */
+};
+  
 
-            console.log(
-                'Notification pressed:',
-                item
-            );
-        };
+     
 
+ 
 
     // =====================================================
     // GO HOME
