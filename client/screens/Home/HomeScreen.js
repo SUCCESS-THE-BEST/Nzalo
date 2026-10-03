@@ -5,6 +5,7 @@ import {
     Pressable,
     ScrollView,
     Image,
+    TouchableOpacity
 } from 'react-native';
 
 import {
@@ -524,7 +525,7 @@ export default function HomeScreen() {
                     >
                         <Bell
                             size={20}
-                            color={COLORS.text}
+                            color={colors.text}
                         />
                     </TouchableOpacity>
 
