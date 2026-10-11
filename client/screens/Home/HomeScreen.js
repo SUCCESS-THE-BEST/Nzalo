@@ -4,8 +4,8 @@ import {
     View,
     Pressable,
     ScrollView,
+    TouchableOpacity,
     Image,
-    TouchableOpacity
 } from 'react-native';
 
 import {
@@ -21,8 +21,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '../../theme/colors';
 import { fonts } from '../../theme/fonts';
 
-import { useNavigation } from '@react-navigation/native';
-import { useEffect, useState } from 'react';
+// import { useNavigation } from '@react-navigation/native';
+import {
+    useNavigation,
+    useFocusEffect,
+} from '@react-navigation/native';
+// import { useEffect, useState } from 'react';
+import {
+    useCallback,
+    useEffect,
+    useState,
+} from 'react';
 
 import ProfileSidebar from '../../components/ProfileSidebar';
 import { useAuth } from '../../context/AuthContext';
@@ -157,7 +166,41 @@ export default function HomeScreen() {
 
     const [stokvels, setStokvels] = useState([]);
     const [stokvelsLoading, setStokvelsLoading] = useState(true);
+    // creating a symbol to alter when there is an unread notification so that i can show a red dot on the bell icon when there is an unread notification
+const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
+useFocusEffect(
+    useCallback(() => {
+        async function checkUnreadNotifications() {
+            if (!user) {
+                setHasUnreadNotifications(false);
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from('notifications')
+                .select('id')
+                .eq('is_read', false)
+                .limit(1);
+
+            if (error) {
+                console.log(
+                    'Notification check error:',
+                    error.message
+                );
+                return;
+            }
+
+            setHasUnreadNotifications(
+                (data || []).length > 0
+            );
+        }
+
+        if (!authLoading) {
+            checkUnreadNotifications();
+        }
+    }, [user, authLoading])
+);
 
     /* =====================================================
        LOAD PROFILE
@@ -518,16 +561,21 @@ export default function HomeScreen() {
 
 
                     <TouchableOpacity
-                        activeOpacity={0.8}
-                        onPress={() =>
-                            navigation.navigate('Notifications')
-                        }
-                    >
-                        <Bell
-                            size={20}
-                            color={colors.text}
-                        />
-                    </TouchableOpacity>
+    activeOpacity={0.8}
+    style={styles.notification}
+    onPress={() =>
+        navigation.navigate('Notifications')
+    }
+>
+    <Bell
+        size={20}
+        color={colors.text}
+    />
+
+    {hasUnreadNotifications && (
+        <View style={styles.notificationDot} />
+    )}
+</TouchableOpacity>
 
                 </View>
 
@@ -774,9 +822,13 @@ export default function HomeScreen() {
                                             styles.stokvelCardPressed,
                                     ]}
                                     onPress={() =>
-                                        navigation.navigate("StokvelDetail", { 
-                                            id: stokvel.id,
-                                        })
+                                        navigation.navigate(
+                                            'StokvelDetail',
+                                            {
+                                                id:
+                                                    stokvel.id,
+                                            }
+                                        )
                                     }
                                 >
 
@@ -1097,6 +1149,24 @@ const styles = StyleSheet.create({
 
         elevation: 1,
     },
+
+
+    notificationDot: {
+    position: 'absolute',
+
+    top: 7,
+    right: 7,
+
+    width: 9,
+    height: 9,
+
+    borderRadius: 5,
+
+    backgroundColor: '#03380d',
+
+    borderWidth: 2,
+    borderColor: colors.white,
+},
 
 
     /* =====================================================
